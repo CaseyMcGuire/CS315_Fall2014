@@ -1,0 +1,17 @@
+line,bar,pie
+Pixar Domestic Box Office Grosses (millions US$)
+Toy Story, 191.8
+A Bug's Life, 162.8
+Toy Story 2, 245.9
+Monsters Inc., 289.9
+Finding Nemo, 380.8
+The Incredibles, 261.4
+Cars, 244.1
+Ratatouille, 206.4
+WALL-E, 223.8
+Up, 293
+Toy Story 3, 415
+Cars 2, 191.5
+Brave, 237.3
+Monsters University, 268.5
+
