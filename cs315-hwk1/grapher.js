@@ -22,8 +22,8 @@ function init() {
 	    if(file[x] == "") break;
 	    var curLine = file[x].split(",");
 	    a[a.length] = {
-		label : curLine[0],
-		value : parseInt(curLine[1])
+		  label : curLine[0],
+		  value : parseInt(curLine[1])
 	    }
 	}
 	return a;
@@ -31,9 +31,9 @@ function init() {
     
     graphs = {
 	
-	title :file[1],
-	data : file.getData(),
-	formats: file[0].split(",")
+	   title :file[1],
+	   data : file.getData(),
+	   formats: file[0].split(",")
     }
 
 console.log(graphs);
@@ -48,42 +48,88 @@ function draw() {
   //  context.fillRect(50, 25, 150, 100);
     
 
-    for (var x = 0.5; x < 960; x += 10){
-//	context.moveTo(x, 0);
-//	context.lineTo(x, 600);
-    }
+    //for (var x = 0.5; x < 960; x += 10){
+	//    context.moveTo(x, 0);
+     //   context.lineTo(x, 600);
+    //}
     
-    for (var y = 0.5; y < 600; y += 10) {
-//	context.moveTo(0, y);
-//	context.lineTo(960, y);
-    }
+    //for (var y = 0.5; y < 600; y += 10) {
+    	//context.moveTo(0, y);
+    	//context.lineTo(960, y);
+    //}
     
     context.strokeStyle = "#000000";
     context.stroke();
 
     context.font = "bold 12px sans-serif";
-    context.fillText("Hello World!" , 248, 43);
+    context.fillText(graphs.title , canvas.width/3, 43);
 
     var xArea = canvas.width/3;
     
+    //draw some separators..I might not keep this
+    drawSeparator(xArea);
     
-    
+    //draw our graphs
     drawLineGraph(0, xArea);
+    drawBarGraph(xArea, 2*xArea);
+    drawPieChart(2*xArea, 3*xArea);
     
+    //make them show up on the screen
+    context.stroke();
     
-    
+}
+
+//This draws lines between the graphs
+function drawSeparator(xTo){
+
+    for(var x = xTo; x<xTo*graphs.formats.length; x+= xTo){
+        context.moveTo(x, 0);
+        context.lineTo(x, canvas.height);
+        console.log(x);
+    }
 }
 
 function drawLineGraph(xFrom, xTo){
 
-    //first draw the axes
-    context.moveTo(xFrom + 10, 500);
-    context.lineTo(xTo-10, 500 );
-    context.moveTo(xFrom + 10, 500);
-    context.lineTo(xFrom + 10, 100);
+    xFrom += 10;
+    xTo -= 10;
+    topOfGraph = canvas.height - 100;
+    bottomOfGraph = canvas.height - 400;    
 
-    context.stroke();
-    
+    //first draw the axes
+    context.moveTo(xFrom, topOfGraph);
+    context.lineTo(xTo, topOfGraph);
+    context.moveTo(xFrom, 500);
+    context.lineTo(xFrom, 100);
+
+    var increment = getLength(xFrom, xTo)/graphs.data.length;
+
+    drawLine(xTo, xFrom, increment);
+
+}
+
+function getLength(xFrom, xTo){
+    return xTo - xFrom;
+}
+
+function drawLine(xTo, xFrom, increment){
+
+    console.log(xTo);
+    console.log(xFrom);
+
+    var increment = 0;
+
+    for(var x = xFrom; x < xTo; x+= increment){
+        console.log(x);
+        context.moveTo(x, graphs.data[increment]);
+        context.lineTo(x+increment, graphs.data[increment]);
+    }
+}
+
+
+//returns the smallest element in the
+function getMin(){
+
 }
 
 function drawBarGraph(xFrom, xTo){
