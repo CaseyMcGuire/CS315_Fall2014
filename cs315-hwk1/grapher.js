@@ -1,7 +1,7 @@
 var datatable = 'assets/pixar.txt'; //the file to load
-var file;
-var graphs;
-
+var file;//for the file to be loaded
+var graphs;//holds formatted graph data
+var singleGraphArea;
 
 
 var canvas; //the canvas we'll be drawing on
@@ -44,19 +44,6 @@ console.log(graphs);
 
 //draws in 2D on the canvas
 function draw() {
-
-  //  context.fillRect(50, 25, 150, 100);
-    
-
-    //for (var x = 0.5; x < 960; x += 10){
-	//    context.moveTo(x, 0);
-     //   context.lineTo(x, 600);
-    //}
-    
-    //for (var y = 0.5; y < 600; y += 10) {
-    	//context.moveTo(0, y);
-    	//context.lineTo(960, y);
-    //}
     
     context.strokeStyle = "#000000";
     context.stroke();
@@ -64,15 +51,15 @@ function draw() {
     context.font = "bold 12px sans-serif";
     context.fillText(graphs.title , canvas.width/3, 43);
 
-    var xArea = canvas.width/3;
+    singleGraphArea = canvas.width/3;
     
     //draw some separators..I might not keep this
-    drawSeparator(xArea);
+    drawSeparator(singleGraphArea);
     
     //draw our graphs
-    drawLineGraph(0, xArea);
-    drawBarGraph(xArea, 2*xArea);
-    drawPieChart(2*xArea, 3*xArea);
+    drawLineGraph(0, singleGraphArea);
+    drawBarGraph(singleGraphArea, 2*singleGraphArea);
+   // drawPieChart(2*xArea, 3*xArea);
     
     //make them show up on the screen
     context.stroke();
@@ -89,22 +76,40 @@ function drawSeparator(xTo){
     }
 }
 
-function drawLineGraph(xFrom, xTo){
+function drawLineGraph(begin, end){
 
-    xFrom += 10;
-    xTo -= 10;
+    //create a buffer of white space between the 
+    //graph and the edges of the allocated graph
+    //space
+    begin += 10;
+    end -= 10;
     topOfGraph = canvas.height - 100;
     bottomOfGraph = canvas.height - 400;    
 
     //first draw the axes
-    context.moveTo(xFrom, topOfGraph);
-    context.lineTo(xTo, topOfGraph);
-    context.moveTo(xFrom, 500);
-    context.lineTo(xFrom, 100);
+    context.moveTo(begin, topOfGraph);
+    context.lineTo(end, topOfGraph);
+    context.moveTo(begin, 500);
+    context.lineTo(begin, 100);
 
-    var increment = getLength(xFrom, xTo)/graphs.data.length;
+    var increment = getLength(begin, end)/graphs.data.length;
 
-    drawLine(xTo, xFrom, increment);
+    console.log(begin);
+    console.log(end);
+
+    //now draw the graph
+    var lineWidth = singleGraphArea/graphs.data.length 
+    
+    var x;
+    var y = graphs.data[0].value;
+    context.moveTo(begin, 500 - y);
+    for(var i = 0; i < graphs.data.length - 1 ; i++){
+	x = i*lineWidth + lineWidth;
+	y = graphs.data[i+1].value;
+	context.lineTo(x, y);
+    }
+
+   // drawLine(begin,end, increment);
 
 }
 
@@ -112,17 +117,19 @@ function getLength(xFrom, xTo){
     return xTo - xFrom;
 }
 
-function drawLine(xTo, xFrom, increment){
-
-    console.log(xTo);
-    console.log(xFrom);
-
-    var increment = 0;
-
-    for(var x = xFrom; x < xTo; x+= increment){
-        console.log(x);
-        context.moveTo(x, graphs.data[increment]);
-        context.lineTo(x+increment, graphs.data[increment]);
+function drawLine(begin, end, increment){
+    
+    console.log(begin);
+    console.log(end);
+    var lineWidth = singleGraphArea/graphs.data.length 
+    
+    var x;
+    var y = graphs.data[0].value;
+    context.moveTo(begin, 500 - y);
+    for(var i = 0; i < graphs.data.length - 1 ; i++){
+	x = i*lineWidth + lineWidth;
+	y = graphs.data[i+1].value;
+	context.lineTo(x, y);
     }
 }
 
@@ -132,8 +139,13 @@ function getMin(){
 
 }
 
-function drawBarGraph(xFrom, xTo){
-
+function drawBarGraph(begin, end){
+    var barWidth = singleGraphArea/graphs.data.length;
+    
+    for(var i = 0; i< graphs.data.length; i++){
+	var barHeight = graphs.data[i].value;
+	context.fillRect(i*barWidth + begin,500- barHeight, barWidth, barHeight);
+    }
 }
 
 function drawPieChart(xFrom, xTo){
