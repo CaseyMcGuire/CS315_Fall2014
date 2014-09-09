@@ -58,7 +58,7 @@ function draw() {
     
     //draw our graphs
     drawLineGraph(0, singleGraphArea);
-    drawBarGraph(singleGraphArea, 2*singleGraphArea);
+   // drawBarGraph(singleGraphArea, 2*singleGraphArea);
    // drawPieChart(2*xArea, 3*xArea);
     
     //make them show up on the screen
@@ -102,41 +102,36 @@ function drawLineGraph(begin, end){
     
     var x;
     var y = graphs.data[0].value;
+   
     context.moveTo(begin, 500 - y);
     for(var i = 0; i < graphs.data.length - 1 ; i++){
 	x = i*lineWidth + lineWidth;
 	y = graphs.data[i+1].value;
 	context.lineTo(x, y);
+	//context.beginPath();
+	context.arc(x, y, 1, 0, 2*Math.PI, false);
+	//context.closePath();
+
     }
+    drawLabels(begin,lineWidth);
 
-   // drawLine(begin,end, increment);
+}
 
+//draws appropriate labels beneath graphs
+function drawLabels(begin, spacing){
+    context.save();
+    context.translate(0, canvas.height-25);
+    context.rotate(-Math.PI/2);
+    var x = spacing;
+    for(var i = 0; i< graphs.data.length; i++){
+	context.fillText(graphs.data[i].label , begin, spacing);
+	spacing += x;
+    }
+    context.restore();
 }
 
 function getLength(xFrom, xTo){
     return xTo - xFrom;
-}
-
-function drawLine(begin, end, increment){
-    
-    console.log(begin);
-    console.log(end);
-    var lineWidth = singleGraphArea/graphs.data.length 
-    
-    var x;
-    var y = graphs.data[0].value;
-    context.moveTo(begin, 500 - y);
-    for(var i = 0; i < graphs.data.length - 1 ; i++){
-	x = i*lineWidth + lineWidth;
-	y = graphs.data[i+1].value;
-	context.lineTo(x, y);
-    }
-}
-
-
-//returns the smallest element in the
-function getMin(){
-
 }
 
 function drawBarGraph(begin, end){
