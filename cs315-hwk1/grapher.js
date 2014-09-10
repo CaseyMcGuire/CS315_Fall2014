@@ -63,7 +63,7 @@ function draw() {
     //draw our graphs
     drawLineGraph(0, singleGraphArea);
     drawBarGraph(singleGraphArea, 2*singleGraphArea);
-   // drawPieChart(2*xArea, 3*xArea);
+    drawPieChart(2*singleGraphArea, 3*singleGraphArea);
     
     //make them show up on the screen
     context.stroke();
@@ -244,9 +244,51 @@ function drawBarGraph(begin, end){
     drawLabels(begin, barWidth);
 }
 
-function drawPieChart(xFrom, xTo){
+function drawPieChart(begin, end){
     
+    console.log("begin " + begin + " end "+ end);
+    
+    var centerX = begin + (end - begin)/2;
+    var centerY = canvas.height/2;
 
+    context.moveTo(centerX,centerY);
+    console.log("Center x " + centerX);
+
+    var wholeCircle = 2*Math.PI;
+    var total = getTotal();
+    var curAngle = 0;
+    var prevAngle = 0;
+    
+    var fractionOfTotal;
+    for(var i = 0; i < graphs.data.length ; i++){
+	fractionOfTotal = graphs.data[i].value/total;
+	curAngle += wholeCircle*fractionOfTotal;
+	drawSingleSlice(centerX,centerY, prevAngle, curAngle, 100);
+	prevAngle = curAngle;
+    }
+
+}
+
+function getTotal(){
+    
+    var total = 0;
+    for(var i = 0; i < graphs.data.length; i++){
+	total += graphs.data[i].value;
+	
+    }
+    return total;
+    
+}
+
+function drawSingleSlice(centerX, centerY,prevAngle, curAngle, radius){
+   
+    context.beginPath();
+    context.moveTo(centerX, centerY);
+    context.arc(centerX, centerY, radius, prevAngle, curAngle, false);
+    context.lineTo(centerX, centerY);
+    context.fillStyle = 'green';
+    context.fill();
+    
 }
 
 
