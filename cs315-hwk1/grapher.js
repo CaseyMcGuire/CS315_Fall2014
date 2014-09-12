@@ -15,30 +15,30 @@ function init() {
     file =  file.split(new RegExp("\\n"));
     console.log(file);//print to developer console
     console.log(typeof file);
-
+    
     //create a method to help 
     file.getData = function(){
-	   var a = new Array();
-	   for(var x = 2; x < file.length; x++){
-	      if(file[x] == "") break;
-	        var curLine = file[x].split(",");
-	        a[a.length] = {
-		    label : curLine[0],
-		    value : parseInt(curLine[1])
-	     }
-	   }
+	var a = new Array();
+	for(var x = 2; x < file.length; x++){
+	    if(file[x] == "") break;
+	    var curLine = file[x].split(",");
+	       a[a.length] = {
+		   label : curLine[0],
+		   value : parseInt(curLine[1])
+	       }
+	}
 	return a;
     }
     
     graphs = {
 	
-	   title :file[1],
-	   data : file.getData(),
-	   formats: file[0].split(",")
+	title :file[1],
+	data : file.getData(),
+	formats: file[0].split(",")
     }
-
-console.log(graphs);
-
+    
+    console.log(graphs);
+    
     
 }
 
@@ -48,54 +48,47 @@ function draw() {
     
     context.strokeStyle = "#000000";
     context.stroke();
-
+    
     context.font = "bold 12px sans-serif";
     context.fillText(graphs.title , canvas.width/3, 43);
 
     singleGraphArea = canvas.width/3;
     
-    //draw some separators..I might not keep this
-    drawSeparator(singleGraphArea);
-    
-    console.log("single graph area" + singleGraphArea);
-    console.log("graph width" + canvas.width);
-    console.log("graph height" + canvas.height);
+    //  console.log("single graph area" + singleGraphArea);
+    //  console.log("graph width" + canvas.width);
+    //  console.log("graph height" + canvas.height);
     //draw our graphs
     drawLineGraph(0, singleGraphArea);
     drawBarGraph(singleGraphArea, 2*singleGraphArea);
     drawPieChart(2*singleGraphArea, 3*singleGraphArea);
-    
-    //make them show up on the screen
-    context.stroke();
-    
 }
 
 //This draws lines between the graphs
 function drawSeparator(xTo){
-
+    
     for(var x = xTo; x<xTo*graphs.formats.length; x+= xTo){
         context.moveTo(x, 0);
         context.lineTo(x, canvas.height);
-        console.log(x);
+	//  console.log(x);
     }
 }
 
 //return an object that contains values that will help scale a graph properly
 function getGraphDimensions(begin, end){
-    var sideBuffer = (end - begin) *.05;
-
+    var sideBuffer = (end - begin) *.07;
+    
     begin += sideBuffer;
     end -= sideBuffer;
-
+    
     var bottomBuffer = canvas.height*.85;
     var topBuffer = canvas.height/6;
 
-    console.log("bottom buffer " + bottomBuffer);
-    console.log("top buffer " + topBuffer);
-
+    // console.log("bottom buffer " + bottomBuffer);
+    //  console.log("top buffer " + topBuffer);
+    
     var topOfGraph = canvas.height - topBuffer;
     var bottomOfGraph = canvas.height - bottomBuffer;
-
+    
     return{
 	begin: begin,
 	end: end,
@@ -108,11 +101,12 @@ function getGraphDimensions(begin, end){
 }
 
 function drawLineGraph(begin, end){
-
+    context.beginPath();
+    
     //create a buffer of white space between the 
     //graph and the edges of the allocated graph
     //space
-     var dimensions = getGraphDimensions(begin, end);
+    var dimensions = getGraphDimensions(begin, end);
     
     begin = dimensions.begin;
     end = dimensions.end;
@@ -121,38 +115,41 @@ function drawLineGraph(begin, end){
     var topBuffer = dimensions.topBuffer;
     var topOfGraph = dimensions.topOfGraph;
     var bottomOfGraph = dimensions.bottomOfGraph;    
-
+    
     //first draw the axes
     drawAxes(begin, end, topOfGraph, bottomOfGraph);
-
+    
     var increment = getLength(begin, end)/graphs.data.length;
-
-    console.log(begin);
-    console.log(end);
-
+    
+    //console.log(begin);
+    // console.log(end);
+    
     //now draw the graph
     var lineWidth = (end - begin)/graphs.data.length 
     
     //find the largest and smallest values for linear interpolation
     var smallest = findSmallestValue();
     var largest = findLargestValue();
+    
+    //  console.log("largest " + largest + " smallest " + smallest);
+    
+    var height = topOfGraph - bottomOfGraph;
 
-    console.log("largest " + largest + " smallest " + smallest);
-   
-   var height = topOfGraph - bottomOfGraph;
-
-   //draw the graph
-
+    //draw the graph
+    
     var x;
-    var y = graphs.data[0].value;
+    var y;
     for(var i = 1; i <= graphs.data.length ; i++){
-	x = (i-1)*lineWidth + lineWidth;
+	x = (i-1)*lineWidth + begin + lineWidth*.5;
 	y = -((graphs.data[i-1].value - smallest)/(largest - smallest))*height + topOfGraph;
 	if(i == 1) context.moveTo(x, y);
 	context.lineTo(x, y);
-	context.arc(x, y, 1, 0, 2*Math.PI, false);
+	context.arc(x, y, 1, 0, 2*Math.PI, false);//put circles at each point
 	
     }
+    context.stroke();
+    context.closePath();
+    
     drawLabels(begin,lineWidth);
     
 }
@@ -183,6 +180,8 @@ function findLargestValue(){
 
 //draws axes in for a single graph
 function drawAxes(begin, end, topOfGraph, bottomOfGraph){
+    
+    context.beginPath();
     //draw x axis
     context.moveTo(begin, topOfGraph);
     context.lineTo(end, topOfGraph);
@@ -194,26 +193,51 @@ function drawAxes(begin, end, topOfGraph, bottomOfGraph){
     //create divots along x axis
     context.moveTo(begin, topOfGraph);
     var increment = getLength(begin,end)/graphs.data.length;
-    for(var i = 1; i<=graphs.data.length; i++){
-        context.moveTo(i*increment, topOfGraph);
-        context.lineTo(i*increment, topOfGraph+4);
+    for(var i = 0; i<graphs.data.length; i++){
+        context.moveTo(i*increment + begin, topOfGraph);
+        context.lineTo(i*increment + begin, topOfGraph+4);
     }
+    context.stroke();
+    context.closePath();
+
+    drawScaledYAxis(begin,end,topOfGraph, bottomOfGraph);
+}
+
+function drawScaledYAxis(begin, end, topOfGraph, bottomOfGraph){
+    context.beginPath();
+   
+    var yAxisLength = getLength(bottomOfGraph, topOfGraph);
+    console.log("y axis" + yAxisLength);
+    var increment = yAxisLength/graphs.data.length;
+    
+    for(var i = 0; i < graphs.data.length; i++){
+	context.moveTo(begin,topOfGraph-i*increment);
+	context.lineTo(begin-4,topOfGraph-i*increment);
+
+    }
+
+    context.stroke();
+    context.closePath();
 }
 
 //draws appropriate labels beneath graphs
 function drawLabels(begin, spacing, topOfGraph){
     context.save();
     console.log("begin" + begin);
+    
+    
     context.translate(begin, canvas.height);
     context.rotate(-Math.PI/2);
-       
+    
     var x = spacing;
-    for(var i = 0; i< graphs.data.length; i++){
-	context.fillText(graphs.data[i].label , 20, spacing-10, 80);
+    for(var i = 0; i< graphs.data.length; i++){	
+	context.fillText(graphs.data[i].label , 20, spacing-3, 80);
 	spacing += x;
+	
     }
     context.restore();
 }
+
 
 //returns the length between the begin point and the end point
 function getLength(begin, end){
@@ -221,8 +245,8 @@ function getLength(begin, end){
 }
 
 function drawBarGraph(begin, end){
-
-     var dimensions = getGraphDimensions(begin, end);    
+    
+    var dimensions = getGraphDimensions(begin, end);    
     begin = dimensions.begin;
     end = dimensions.end;
     var sideBuffer = dimensions.sideBuffer;
@@ -232,18 +256,34 @@ function drawBarGraph(begin, end){
     var bottomOfGraph = dimensions.bottomOfGraph; 
     
     drawAxes(begin, end, topOfGraph, bottomOfGraph);
-
-
+    
+    
     var barWidth = getLength(begin,end)/graphs.data.length;
     
+    var smallest = findSmallestValue();
+    var largest = findLargestValue();
+    var height = topOfGraph - bottomOfGraph;
+    
+    
     for(var i = 0; i< graphs.data.length; i++){
-	   var barHeight = graphs.data[i].value;
-	   context.fillRect(i*barWidth + begin,500 - barHeight, barWidth, barHeight);
+	//var y = (graphs.data[i].value/largest)*height + topBuffer;
+	var y = (-((graphs.data[i].value - smallest)/(largest - smallest))*height + topOfGraph)*.995;
+	var barHeight = topOfGraph - y;
+	
+	//	context.fillRect(i*barWidth + begin,topOfGraph - barHeight, barWidth, barHeight);
+	//var height = bottomOfGraph - y;
+	//	console.log("height " + height);
+	console.log(topOfGraph);
+	context.fillRect(i*barWidth + begin,y , barWidth, barHeight);
+	
+	
+	
     }
     console.log("bar width" + barWidth);
     drawLabels(begin, barWidth);
 }
 
+//draw the pie chart in eh 
 function drawPieChart(begin, end){
     
     console.log("begin " + begin + " end "+ end);
@@ -251,13 +291,15 @@ function drawPieChart(begin, end){
     var centerX = begin + (end - begin)/2;
     var centerY = canvas.height/2;
 
+    context.beginPath();
     context.moveTo(centerX,centerY);
-    console.log("Center x " + centerX);
+   // console.log("Center x " + centerX);
 
     var wholeCircle = 2*Math.PI;
     var total = getTotal();
     var curAngle = 0;
     var prevAngle = 0;
+
     
     var fractionOfTotal;
     for(var i = 0; i < graphs.data.length ; i++){
@@ -267,30 +309,31 @@ function drawPieChart(begin, end){
 	prevAngle = curAngle;
     }
 
-}
+    context.closePath();
 
-function getTotal(){
-    
-    var total = 0;
-    for(var i = 0; i < graphs.data.length; i++){
-	total += graphs.data[i].value;
-	
-    }
-    return total;
-    
 }
 
 function drawSingleSlice(centerX, centerY,prevAngle, curAngle, radius){
-   
     context.beginPath();
     context.moveTo(centerX, centerY);
     context.arc(centerX, centerY, radius, prevAngle, curAngle, false);
     context.lineTo(centerX, centerY);
     context.fillStyle = 'green';
+    context.stroke();
+    context.closePath();
     context.fill();
-    
 }
 
+//the total of the value entries
+function getTotal(){
+    
+    var total = 0;
+    for(var i = 0; i < graphs.data.length; i++){
+	total += graphs.data[i].value;
+    }
+    return total;
+    
+}
 
 
 
