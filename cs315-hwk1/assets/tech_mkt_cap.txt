@@ -1,0 +1,17 @@
+line,bar,pie
+Market Capitalization of Technology Firms (Billions US$)
+eBay, 62.90
+Microsoft, 387.27
+Apple, 607.35
+IBM, 191.26
+Oracle, 181.22
+Amazon, 152.71
+Twitter, 32.39
+Google, 396.52
+Facebook, 202.60
+Yahoo, 41.04
+LinkedIn, 27.85
+AOL, 3.35
+
+
+

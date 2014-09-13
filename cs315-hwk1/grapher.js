@@ -212,20 +212,23 @@ function drawScaledYAxis(begin, end, topOfGraph, bottomOfGraph){
     context.beginPath();
    
     var yAxisLength = getLength(bottomOfGraph, topOfGraph);
-    console.log("y axis" + yAxisLength);
+
     var increment = yAxisLength/graphs.data.length;
     var smallest = findSmallestValue();
-    var labelIncrementer = getLength(begin, end)/graphs.data.length;
+    var labelIncrementer = getLength(smallest, findLargestValue())/graphs.data.length;
     var divotLength = getLength(begin, end)*.02;
     var textXLocation = getLength(begin, end)*.06;
-    console.log(textXLocation);
 
+
+    //this loop basically goes up the y-axis, drawing divots and labeling 
+    //them appropriately. The smallest value should be at the bottom of the
+    //y-axis and the largest value should be at the top
     //Note: multiplication by the decimal numbers is just a bit of tinkering 
     //to stop graph elements from overlapping
-    for(var i = 0; i < graphs.data.length; i++){
-	context.moveTo(begin,topOfGraph-i*increment);
-	context.lineTo(begin-divotLength,topOfGraph-i*increment);
-	context.fillText(Math.round(smallest+ labelIncrementer*i), (begin - textXLocation)*.99, (topOfGraph-i*increment)*1.01, textXLocation*.7);
+    for(var i = 0; i <= graphs.data.length; i++){
+	context.moveTo(begin,topOfGraph - i * increment);
+	context.lineTo(begin - divotLength, topOfGraph-i*increment);
+	context.fillText(Math.round(smallest + labelIncrementer*i), (begin - textXLocation)*.99, (topOfGraph-i*increment)*1.01, textXLocation*.7);
     }
 
     context.stroke();
