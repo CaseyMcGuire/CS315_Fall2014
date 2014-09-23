@@ -9,7 +9,8 @@ var shaderProgram;
 var glyphs = {};
 var alphabet = ["A","B","C","D","E","F", "G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"];
 var translation = [0, 0];
-var matrix;// = mat4.create();
+//var matrix;// = mat4.create();
+var input;
 
 function init(){
   //initialize canvas and webgl
@@ -67,7 +68,7 @@ function drawGlyph(glyph, offset, scale) {
 
  //  console.log(glyph);
   
-    matrix = mat4.create();
+   var  matrix = mat4.create();
 console.log(matrix);
     gl.bindBuffer(gl.ARRAY_BUFFER, glyph.vertexBuffer);   
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, glyph.indexBuffer);
@@ -125,13 +126,19 @@ function drawString(chars) {
  */
 function render(){
     gl.clear(gl.COLOR_BUFFER_BIT); //clear previous rendering
-    drawString(['A','U','A']); //draw this string
+    drawString(input); //draw this string
 }
 
 
 //once everything is ready, run the script
 $(document).ready(function(){
+
+$('button').click(function() {
+    input = $("input[id=textField]").val().toUpperCase().split('');
+    render();
+});
+
   init(); //initialize everything
-  render(); //start drawing
+ // render(); //start drawing
 });
 
