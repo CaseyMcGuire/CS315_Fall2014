@@ -7,7 +7,8 @@ var shaderProgram;
 
 //a hash containing all the glyphs we'll be using
 var glyphs = {};
-
+var alphabet = ["A","B","C","D","E","F", "G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"];
+var translation = [0, 400];
 
 function init(){
   //initialize canvas and webgl
@@ -27,29 +28,31 @@ function init(){
   //grab handles for later (store in the program object to keep organized)
     shaderProgram.vertexPositionHandle = gl.getAttribLocation(shaderProgram, "aPosition");
     shaderProgram.glyphSizeHandle = gl.getUniformLocation(shaderProgram,"uGlyphSize");
+    shaderProgram.translationLocation = gl.getUniformLocation(shaderProgram, "u_translation");
 
-//probably put a for loop here later
 
-    var cur = 'A';
-   
-    glyphs[cur] = Utils.loadJSON("assets/A.json");
-    console.log(glyphs[cur]);
 
-   // glyphs.singleGlyph[cur].vertices = new Float32Array(glyphs.singleGlyph[cur].vertices)
-   // glyphs.singleGlyph[cur].indices = new Uint16Array(glyphs.singleGlyph[cur].indices);
 
-    var vertexFloats = new Float32Array(glyphs[cur].vertices);
-    glyphs[cur].vertexBuffer = gl.createBuffer();    
-    gl.bindBuffer(gl.ARRAY_BUFFER,glyphs[cur].vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vertexFloats, gl.STATIC_DRAW);
-    glyphs[cur].numVertices = glyphs[cur].vertices.length/2;
+    //parse our letters
+    alphabet2 = ["A", "U"];
+   for(var letter in alphabet2){
+//	console.log(alphabet2[letter]);
+       
+       glyphs[alphabet2[letter]] = Utils.loadJSON("assets/" + alphabet2[letter] + ".json");
 
-    var indUints = new Uint16Array(glyphs[cur].indices);
-    glyphs[cur].indexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, glyphs[cur].indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indUints, gl.STATIC_DRAW);
-    glyphs[cur].numIndices = glyphs[cur].indices.length;
-    
+       var indUints = new Uint16Array(glyphs[alphabet2[letter]].indices);
+       glyphs[alphabet2[letter]].indexBuffer = gl.createBuffer();
+       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, glyphs[alphabet2[letter]].indexBuffer);
+       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indUints, gl.STATIC_DRAW);
+       glyphs[alphabet2[letter]].numIndices = glyphs[alphabet2[letter]].indices.length;
+       
+       var vertexFloats = new Float32Array(glyphs[alphabet2[letter]].vertices);
+       glyphs[alphabet2[letter]].vertexBuffer = gl.createBuffer();    
+       gl.bindBuffer(gl.ARRAY_BUFFER,glyphs[alphabet2[letter]].vertexBuffer);
+       gl.bufferData(gl.ARRAY_BUFFER, vertexFloats, gl.STATIC_DRAW);
+       glyphs[alphabet2[letter]].numVertices = glyphs[alphabet2[letter]].vertices.length/2;
+       
+   }
 }
 
 /**
@@ -60,19 +63,18 @@ function init(){
  */
 function drawGlyph(glyph, offset, scale) {
 
+ //  console.log(glyph);
   
-    gl.bindBuffer(gl.ARRAY_BUFFER, glyph.vertexBuffer);
- 
-    
-    gl.vertexAttribPointer(shaderProgram.vertexPositionHandle, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(shaderProgram.vertexPositionHandle);
-   
-    
+    gl.bindBuffer(gl.ARRAY_BUFFER, glyph.vertexBuffer);   
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, glyph.indexBuffer);
+
+   
     gl.vertexAttribPointer(shaderProgram.vertexPositionHandle, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shaderProgram.vertexPositionHandle);
-  
+    
     gl.uniform2fv(shaderProgram.glyphSizeHandle, glyph.size);
+    gl.uniform2fv(shaderProgram.translationLocation, translation);
+      
     gl.drawElements(gl.TRIANGLES, glyph.numIndices, gl.UNSIGNED_SHORT,0);
 
 }
@@ -84,8 +86,7 @@ function drawGlyph(glyph, offset, scale) {
 function drawString(chars) {
   //calculate total "size" of string to determine offsets/scale
   var SPACING = 0.1;
-
-  var totalSize = 0;
+    var totalSize = 0;
   var i;
   for(i=0; i<chars.length; i++) {
     totalSize += glyphs[chars[i]].size[0]/glyphs[chars[i]].size[1];
@@ -98,6 +99,7 @@ function drawString(chars) {
   var offset = Math.max(SPACING*scale, 1-(totalSize/2 - SPACING)); //min initial offset enough to center
   for(i=0; i<chars.length; i++) {
     var glyph = glyphs[chars[i]];
+     
     drawGlyph(glyph, offset, scale);
     offset += (glyph.size[0]/glyph.size[1])*scale;
     offset += SPACING*scale;
