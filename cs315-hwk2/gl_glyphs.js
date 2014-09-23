@@ -8,7 +8,8 @@ var shaderProgram;
 //a hash containing all the glyphs we'll be using
 var glyphs = {};
 var alphabet = ["A","B","C","D","E","F", "G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"];
-var translation = [0, 400];
+var translation = [0, 0];
+var matrix;// = mat4.create();
 
 function init(){
   //initialize canvas and webgl
@@ -28,8 +29,9 @@ function init(){
   //grab handles for later (store in the program object to keep organized)
     shaderProgram.vertexPositionHandle = gl.getAttribLocation(shaderProgram, "aPosition");
     shaderProgram.glyphSizeHandle = gl.getUniformLocation(shaderProgram,"uGlyphSize");
-    shaderProgram.translationLocation = gl.getUniformLocation(shaderProgram, "u_translation");
-
+    shaderProgram.offset = gl.getUniformLocation(shaderProgram, "uOffset");
+    shaderProgram.scale = gl.getUniformLocation(shaderProgram, "uScale");
+    shaderProgram.matrix = gl.getUniformLocation(shaderProgram, "uMatrix");
 
 
 
@@ -65,6 +67,8 @@ function drawGlyph(glyph, offset, scale) {
 
  //  console.log(glyph);
   
+    matrix = mat4.create();
+console.log(matrix);
     gl.bindBuffer(gl.ARRAY_BUFFER, glyph.vertexBuffer);   
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, glyph.indexBuffer);
 
@@ -73,7 +77,16 @@ function drawGlyph(glyph, offset, scale) {
     gl.enableVertexAttribArray(shaderProgram.vertexPositionHandle);
     
     gl.uniform2fv(shaderProgram.glyphSizeHandle, glyph.size);
-    gl.uniform2fv(shaderProgram.translationLocation, translation);
+
+ 
+    console.log(offset);
+   // gl.uniform2fv(shaderProgram.offset, [-1 + offset,-1]);
+    mat4.translate(matrix, matrix, [-1 + offset, -1, 0, 0]);
+    gl.uniformMatrix4fv(shaderProgram.matrix, false, matrix);
+    console.log(matrix);
+    console.log("scale" + scale);
+
+    gl.uniform2fv(shaderProgram.scale, [scale, scale]);
       
     gl.drawElements(gl.TRIANGLES, glyph.numIndices, gl.UNSIGNED_SHORT,0);
 
@@ -112,7 +125,7 @@ function drawString(chars) {
  */
 function render(){
     gl.clear(gl.COLOR_BUFFER_BIT); //clear previous rendering
-    drawString('A'); //draw this string
+    drawString(['A','U','A']); //draw this string
 }
 
 
