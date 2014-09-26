@@ -7,7 +7,7 @@
 * What is your name?
 ***********************************************************************/
 
-<Replace this with your response--remember to delete the angle brackets>
+Casey McGuire
 
 
 
@@ -15,7 +15,7 @@
 * What browser and operating system did you test your program with?
 ***********************************************************************/
 
-<Replace this with your response>
+I tested this with Chrome on Ubuntu and OSX.
 
 
 
@@ -23,7 +23,10 @@
 * What is a String that I should use to test your program with?
 ***********************************************************************/
 
-<Replace this with your response!>
+UA
+
+These were my two letters but all other letters should work too 
+if appropriate .json files are present.
 
 
 
@@ -31,7 +34,7 @@
 * Did you complete any extensions to this assignment? If so, what?
 ***********************************************************************/
 
-<Replace this with your response!>
+No, I didn't have time.
 
 
 
@@ -39,7 +42,7 @@
 * Approximately how many hours did you spend working on this assignment?
 ***********************************************************************/
 
-<Replace this with your response!>
+5 - 10.
 
 
 
@@ -49,7 +52,8 @@
  * How can I make this assignment better?
  **********************************************************************/
 
-<Replace this with your response!>
+ It would have been helpful if the use of matrices to manipulate shapes
+had been covered in class earlier.
 
 
 
@@ -59,6 +63,8 @@
  * doing the assignment, whether you enjoyed doing it, etc.
  **********************************************************************/
 
-<Replace this with your response!>
+I enjoyed this assignment. I now feel like I have a better understanding
+of how the shader and javascript code interact whereas before I felt like
+I was just copying and pasting code.
 
 

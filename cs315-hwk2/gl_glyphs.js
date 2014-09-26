@@ -9,7 +9,6 @@ var shaderProgram;
 var glyphs = {};
 var alphabet = ["a","b","c","d","e","f", "f","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"];
 var translation = [0, 0];
-//var matrix;// = mat4.create();
 var input;
 
 function init(){
@@ -37,14 +36,14 @@ function init(){
 
 
     //parse our letters
-    alphabet2 = ["A", "U"];
+  
    for(var letter in alphabet){
-//	console.log(alphabet2[letter]);
        
        glyphs[alphabet[letter]] = Utils.loadJSON("assets/" + alphabet[letter] + ".json");
+       //this is in case one the letters is not in assets file
        if(glyphs[alphabet[letter]] == undefined) continue;
-       console.log(glyphs[alphabet[letter]]);
-
+       
+       
        var indUints = new Uint16Array(glyphs[alphabet[letter]].indices);
        glyphs[alphabet[letter]].indexBuffer = gl.createBuffer();
        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, glyphs[alphabet[letter]].indexBuffer);
@@ -67,30 +66,27 @@ function init(){
  * @param  {[Number]} scale  A factor to scale the glyph by (from screen-height)
  */
 function drawGlyph(glyph, offset, scale) {
-
- //  console.log(glyph);
-  
+    
+    //create our matrix
    var  matrix = mat4.create();
-console.log(matrix);
+
+    //bind our buffers
     gl.bindBuffer(gl.ARRAY_BUFFER, glyph.vertexBuffer);   
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, glyph.indexBuffer);
 
-   
+    //get our vertices in order
     gl.vertexAttribPointer(shaderProgram.vertexPositionHandle, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shaderProgram.vertexPositionHandle);
-    
     gl.uniform2fv(shaderProgram.glyphSizeHandle, glyph.size);
-
- 
-    console.log(offset);
-   // gl.uniform2fv(shaderProgram.offset, [-1 + offset,-1]);
+  
+    //move our glyph
     mat4.translate(matrix, matrix, [-1 + offset, -1, 0, 0]);
     gl.uniformMatrix4fv(shaderProgram.matrix, false, matrix);
-    console.log(matrix);
-    console.log("scale" + scale);
-
+  
+    //scale our glyph
     gl.uniform2fv(shaderProgram.scale, [scale, scale]);
       
+    //finally draw the glyph
     gl.drawElements(gl.TRIANGLES, glyph.numIndices, gl.UNSIGNED_SHORT,0);
 
 }
@@ -137,10 +133,10 @@ $(document).ready(function(){
 
 $('button').click(function() {
     input = $("input[id=textField]").val().toLowerCase().split('');
-    render();
+    render();//start drawing
 });
 
   init(); //initialize everything
- // render(); //start drawing
+
 });
 
