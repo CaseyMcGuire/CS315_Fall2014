@@ -13,33 +13,33 @@ var translation = [0, 0];
 var input;
 
 function init(){
-  //initialize canvas and webgl
-  canvas = $('#glcanvas')[0]; //first element from jquery selector
-  gl = WebGLUtils.setupWebGL( canvas );
-  if (!gl) { alert("Unable to initialize WebGL. Your browser may not support it."); return; }
-
-  //basic window parameters
-  gl.clearColor(1.0,  1.0,  1.0,  1.0); //white background
-  gl.viewport(0, 0, canvas.width, canvas.height); //viewport setup
-
-  //initialize shaders
-  shaderProgram = ShaderUtils.initShaders(gl, 'shaders/glyph_scaled.vert', 'shaders/glyph.frag'); //load shaders
-  if (shaderProgram < 0) { alert('Unable to initialize shaders.'); return; }
-  gl.useProgram(shaderProgram); //specify to use the shaders
-
-  //grab handles for later (store in the program object to keep organized)
+    //initialize canvas and webgl
+    canvas = $('#glcanvas')[0]; //first element from jquery selector
+    gl = WebGLUtils.setupWebGL( canvas );
+    if (!gl) { alert("Unable to initialize WebGL. Your browser may not support it."); return; }
+    
+    //basic window parameters
+    gl.clearColor(1.0,  1.0,  1.0,  1.0); //white background
+    gl.viewport(0, 0, canvas.width, canvas.height); //viewport setup
+    
+    //initialize shaders
+    shaderProgram = ShaderUtils.initShaders(gl, 'shaders/glyph_scaled.vert', 'shaders/glyph.frag'); //load shaders
+    if (shaderProgram < 0) { alert('Unable to initialize shaders.'); return; }
+    gl.useProgram(shaderProgram); //specify to use the shaders
+    
+    //grab handles for later (store in the program object to keep organized)
     shaderProgram.vertexPositionHandle = gl.getAttribLocation(shaderProgram, "aPosition");
     shaderProgram.glyphSizeHandle = gl.getUniformLocation(shaderProgram,"uGlyphSize");
     shaderProgram.offset = gl.getUniformLocation(shaderProgram, "uOffset");
     shaderProgram.scale = gl.getUniformLocation(shaderProgram, "uScale");
     shaderProgram.matrix = gl.getUniformLocation(shaderProgram, "uMatrix");
-
-
-
+    
+    
+    
     //parse our letters
-    alphabet2 = ["A", "U"];
-   for(var letter in alphabet){
-//	console.log(alphabet2[letter]);
+    
+    for(var letter in alphabet){
+	
        
        glyphs[alphabet[letter]] = Utils.loadJSON("assets/" + alphabet[letter] + ".json");
        if(glyphs[alphabet[letter]] == undefined) continue;
@@ -71,7 +71,7 @@ function drawGlyph(glyph, offset, scale) {
  //  console.log(glyph);
   
    var  matrix = mat4.create();
-console.log(matrix);
+    console.log(matrix);
     gl.bindBuffer(gl.ARRAY_BUFFER, glyph.vertexBuffer);   
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, glyph.indexBuffer);
 
@@ -139,6 +139,7 @@ $('button').click(function() {
     input = $("input[id=textField]").val().toLowerCase().split('');
     render();
 });
+
 
   init(); //initialize everything
  // render(); //start drawing
