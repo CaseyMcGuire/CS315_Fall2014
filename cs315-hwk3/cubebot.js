@@ -29,35 +29,50 @@ function init() {
   //set up the OpenGL program as a "renderer" object  
   renderer = new CubeRenderer(gl);
 
+    setupPoseMatrices(pose);
+
+}
+
+function setupPoseMatrices(poses){
+    
+    //set up our torso
+  //  mat4.rotate(poses["torso"], poses["torso"], Math.PI/6, [1,1,1]);
+    
 }
 
 
 //render the scene
 function render(){
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); //clear screen
-
-  //a color
-  var blue = [0.0, 0.0, 1.0, 1.0];
-
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); //clear screen
+    
+    //a color
+    var blue = [0.0, 0.0, 1.0, 1.0];
+    
     //draw our torso
     var modelMatrix = mat4.create();
+    // mat4.scale(modelMatrix, modelMatrix, vec3.fromValues(3,3,3));
+
+
     mat4.rotate(modelMatrix, modelMatrix, Math.PI/6, [1,1,1]);
-    renderer.drawCube(modelMatrix, blue);
+    mat4.multiply(modelMatrix, modelMatrix, pose["torso"]);
+    
+  //  renderer.drawCube(modelMatrix, blue);
+
+    
+    frameStack.push(mat4.clone(modelMatrix));
+    drawUpperRightArm(frameStack);
 
     frameStack.push(mat4.clone(modelMatrix));
-    drawRightArm();
+    drawUpperLeftArm(frameStack);
 
     frameStack.push(mat4.clone(modelMatrix));
-    drawLeftArm();
+    drawHead(frameStack);
 
     frameStack.push(mat4.clone(modelMatrix));
-    drawHead();
+    drawUpperLeftLeg(frameStack);
 
     frameStack.push(mat4.clone(modelMatrix));
-    drawLeftLeg();
-
-    frameStack.push(mat4.clone(modelMatrix));
-drawRightLeg();
+    drawUpperRightLeg(frameStack);
    
    
     renderer.drawCube(modelMatrix, color);
@@ -66,8 +81,9 @@ drawRightLeg();
 
 
 
-function drawHead(){
-    var curMatrix = frameStack.pop();
+function drawHead(stack){
+    var curMatrix = stack.pop();
+    
     
     mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, 1, 0));
     mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.5, 0.5, 0.5));
@@ -75,31 +91,70 @@ function drawHead(){
     renderer.drawCube(curMatrix, color);
 }
 
-function drawRightArm(){
+function drawUpperRightArm(stack){
 
-    var curMatrix = frameStack.pop();
+    var curMatrix = stack.pop();
 
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(1.35,0,0));
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.3, 1, .5));
+  
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(1.35, 0, 0));
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.3, 1, 0.5));
+
+    
+  // mat4.scale(curMatrix, curMatrix, [.3, 0.5, .5]);
+
+    stack.push(mat4.clone(curMatrix));
+    drawLowerRightArm(stack);
+
     renderer.drawCube(curMatrix, color);
 
 }
 
-function drawLeftArm(){
+function drawLowerRightArm(stack){
+    var curMatrix = stack.pop();
 
-    var curMatrix = frameStack.pop();
+   // mat4.translate(curMatrix, curMatrix, vec
+}
 
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(-1.35, 0, 0));
+function drawUpperLeftArm(stack){
+
+    var curMatrix = stack.pop();
+
+    mat4.rotate(curMatrix, curMatrix, -Math.PI/2, [0,0,0]);
     mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.3, 1, .5));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(-4, 0, 0));
+  
     renderer.drawCube(curMatrix, color);
 
 }
 
-function drawLeftLeg(){
+function drawLowerLeftArm(stack){
 
 }
 
-function drawRightLeg(){
+function drawUpperLeftLeg(stack){
+
+    var curMatrix = stack.pop();
+
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(-0.5, -2, 0));
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.3, 1, 0.5));
+    renderer.drawCube(curMatrix, color);
+
+}
+
+function drawLowerLeftLeg(stack){
+
+}
+
+function drawUpperRightLeg(stack){
+    var curMatrix = stack.pop();
+
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0.5, -2, 0));
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.3, 1, 0.5));
+
+    renderer.drawCube(curMatrix, color);
+}
+
+function drawLowerRightLeg(stack){
 
 }
 
