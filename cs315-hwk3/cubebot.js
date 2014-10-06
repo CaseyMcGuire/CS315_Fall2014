@@ -30,6 +30,8 @@ function init() {
   renderer = new CubeRenderer(gl);
 
     setupPoseMatrices(pose);
+    
+   
 
 }
 
@@ -53,7 +55,7 @@ function render(){
     // mat4.scale(modelMatrix, modelMatrix, vec3.fromValues(3,3,3));
 
 
-    mat4.rotate(modelMatrix, modelMatrix, Math.PI/6, [1,1,1]);
+  //  mat4.rotate(modelMatrix, modelMatrix, Math.PI/6, [1,1,1]);
     mat4.multiply(modelMatrix, modelMatrix, pose["torso"]);
     
   //  renderer.drawCube(modelMatrix, blue);
@@ -158,8 +160,53 @@ function drawLowerRightLeg(stack){
 
 }
 
+function calcZCoordinate(x, y){
+    return Math.sqrt(Math.abs(1 - Math.pow(x, 2) - Math.pow(y, 2)));
+}
+
+function getAngle(first, second){
+    firstLength = vec3.length(first);
+    secondLength = vec3.length(second);
+    dotProd = vec3.dot(first, second);
+    return Math.acos(dotProd/(firstLength * secondLength));
+}
+
 //run script when ready
 $(document).ready(function(){
   init();
   render(); //start drawing
+
+    $(document).keydown(function(key) {
+	if(key.keyCode == 16){
+	    var clicking = false;
+	    console.log("working so far");
+	   // mat4.rotateX(renderer.viewMatrix, renderer.viewMatrix, Math.PI/12);
+	    $("#glcanvas")
+		.mousedown(function(e){
+		    clicking = true;
+	//	    console.log(e.pageX);
+		    oldVec = vec3.fromValues(e.pageX, e.pageY,  calcZCoordinate(e.pageX, e.pageY));
+		    console.log(calcZCoordinate(e.pageX, e.pageY));
+		    vec3.normalize(oldVec, oldVec);
+		    console.log("mousedown");
+		    $("#glcanvas")
+			.mousemove(function(event){
+			    if(clicking == false) return;
+			    newVec = vec3.fromValues(event.pageX, event.pageY, calcZCoordinate(event.pageX, event.pageY));
+			    vec3.normalize(newVec, newVec);
+			    normal = vec3.create();
+			    vec3.cross(normal, newVec, oldVec);
+			    mat4.rotate(renderer.viewMatrix, renderer.viewMatrix, getAngle(oldVec, newVec), normal);
+			    oldVec = newVec;
+			    render();
+			   // console.log("This is working too. X: "+ event.pageX);
+			});
+		})
+		.mouseup(function(){
+		    clicking = false;
+		});
+		
+	    render();
+	}
+    });
 });
