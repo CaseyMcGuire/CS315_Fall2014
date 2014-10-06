@@ -53,6 +53,7 @@ function render(){
     
     //draw our torso
     var modelMatrix = mat4.create();
+    mat4.translate(modelMatrix, modelMatrix, n
     // mat4.scale(modelMatrix, modelMatrix, vec3.fromValues(3,3,3));
 
 
