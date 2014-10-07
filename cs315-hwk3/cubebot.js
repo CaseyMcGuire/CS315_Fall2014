@@ -53,7 +53,7 @@ function render(){
     
     //draw our torso
     var modelMatrix = mat4.create();
-    // mat4.scale(modelMatrix, modelMatrix, vec3.fromValues(3,3,3));
+   // mat4.scale(modelMatrix, modelMatrix, vec3.fromValues(1,3,3));
 
 
   //  mat4.rotate(modelMatrix, modelMatrix, Math.PI/6, [1,1,1]);
@@ -61,9 +61,11 @@ function render(){
     
   //  renderer.drawCube(modelMatrix, blue);
 
-    /*
+    
     frameStack.push(mat4.clone(modelMatrix));
     drawUpperRightArm(frameStack);
+
+/*
 
     frameStack.push(mat4.clone(modelMatrix));
     drawUpperLeftArm(frameStack);
@@ -98,13 +100,29 @@ function drawHead(stack){
 function drawUpperRightArm(stack){
 
     var curMatrix = stack.pop();
-
+    
   
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(1, 1, 0));
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.5, 0.5, 0.5));
+    
+
+    mat4.rotateZ(curMatrix, curMatrix, Math.PI/7);
+   // mat4.scale(curMatrix, curMatrix, vec3.fromValues(1, 1, 1));
+
+/*
+  
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.3, 1.3, 0.3));
+  //  mat4.rotateZ(curMatrix, curMatrix, Math.PI/2);
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, .7, 0));
     mat4.translate(curMatrix, curMatrix, vec3.fromValues(1.35, 0, 0));
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.3, 1, 0.5));
+   
+   
+  //  mat4.scale(curMatrix, curMatrix, vec3.fromValues(2, 1, 2));
+   // mat4.scale(curMatrix, curMatrix, vec3.fromValues(1, 2, 1));
 
     
   // mat4.scale(curMatrix, curMatrix, [.3, 0.5, .5]);
+*/
 
     stack.push(mat4.clone(curMatrix));
     drawLowerRightArm(stack);
@@ -163,12 +181,32 @@ function drawLowerRightLeg(stack){
 }
 
 function calcZCoordinate(twoDVec){
+/*
     vec2.normalize(twoDVec, twoDVec);
     console.log("x" + twoDVec[0]);
     console.log("y" + twoDVec[1]);
+    console.log("The length of this unit vector is" + vec2.length(twoDVec));
+
     sqrt = Math.sqrt(Math.abs(1 - Math.pow(twoDVec[0], 2) - Math.pow(twoDVec[1], 2)));
 console.log("sqrt" + sqrt);
     return sqrt;
+*/
+
+    x = (x - canvas.width);
+    y = (y - canvas.height);
+    var z;
+    var r = Math.pow(x, 2) + Math.pow(x, 2);
+    
+    if(r > 1.0){
+	var s = 1.0/Math.sqrt(r);
+	x = s * x;
+	y = s * y;
+	var z = 0;
+	return vec3.fromValues(x, y, z);
+    }
+    else{
+	var z = Math.sqrt(1.0 - r);
+    }
 }
 
 function getAngle(first, second){
@@ -176,6 +214,32 @@ function getAngle(first, second){
     secondLength = vec3.length(second);
     dotProd = vec3.dot(first, second);
     return Math.acos(dotProd/(firstLength * secondLength));
+}
+
+function setupUnitVector(x, y){
+
+    var vec;
+var radius = Math.min(canvas.height, canvas.width);
+
+    x = (x - canvas.width/2)/radius;
+    y = (y - canvas.height/2)/radius;
+    var z;
+    var r = Math.pow(x, 2) + Math.pow(x, 2);
+    
+    if(r > 1.0){
+console.log("r is bigger than one " + r);
+	var s = 1.0/Math.sqrt(r);
+	x = s * x;
+	y = s * y;
+	var z = 0;
+    }
+    else{
+	var z = Math.sqrt(1.0 - r);
+    }
+
+    vec = vec3.fromValues(x, y, z);
+    vec3.normalize(vec, vec);
+    return vec;
 }
 
 //run script when ready
@@ -194,7 +258,7 @@ $(document).ready(function(){
 		    var oldX = e.pageX;
 		    var oldY = e.pageY;
 
-		    oldVec = vec3.fromValues(oldX, oldY,  calcZCoordinate(vec2.fromValues(oldX, oldY)));
+		    oldVec = setupUnitVector(e.pageX, e.pageY);// vec3.fromValues(oldX, oldY,  calcZCoordinate(vec2.fromValues(oldX, oldY)));
 		//    console.log(calcZCoordinate(e.pageX, e.pageY));
 		    vec3.normalize(oldVec, oldVec);
 		    console.log("mousedown");
@@ -205,7 +269,7 @@ $(document).ready(function(){
 			    var newX = event.pageX;
 			    var newY = event.pageY;
 
-			    newVec = vec3.fromValues(newX, newY, calcZCoordinate(vec2.fromValues(newX, newY)));
+			    newVec = setupUnitVector(newX,newY); // vec3.fromValues(newX, newY, calcZCoordinate(vec2.fromValues(newX, newY)));
 			    vec3.normalize(newVec, newVec);
 			    normal = vec3.create();//place holder for our normal vector
 			    vec3.cross(normal, newVec, oldVec);
