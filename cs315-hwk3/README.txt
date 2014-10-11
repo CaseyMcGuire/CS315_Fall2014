@@ -7,7 +7,7 @@
 * What is your name?
 ***********************************************************************/
 
-<Replace this with your response--remember to delete the angle brackets>
+Casey McGuire
 
 
 
@@ -15,7 +15,7 @@
 * What is the inspiration for your robot?
 ***********************************************************************/
 
-<Replace this with your response!>
+None.
 
 
 
@@ -23,7 +23,7 @@
 * Did you complete any extensions to this assignment? If so, what?
 ***********************************************************************/
 
-<Replace this with your response!>
+Yes, I did arcball rotation instead of trackball rotation.
 
 
 
@@ -31,7 +31,7 @@
 * Approximately how many hours did you spend working on this assignment?
 ***********************************************************************/
 
-<Replace this with your response!>
+10- 15 hours.
 
 
 
@@ -41,7 +41,13 @@
  * How can I make this assignment better?
  **********************************************************************/
 
-<Replace this with your response!>
+-Getting the robot modeled was a lot more challenging than I thought it
+would be.
+
+-Getting jQuery to work as described was also challenging. I was
+able to do it since I have some background in HTML and CSS though I would 
+imagine someone who didn't have such background would've found this part of the
+assignment very difficult.
 
 
 
@@ -51,6 +57,6 @@
  * doing the assignment, whether you enjoyed doing it, etc.
  **********************************************************************/
 
-<Replace this with your response!>
-
+I feel that I have a much better understanding of how matrices are used to
+manipulate images.
 
