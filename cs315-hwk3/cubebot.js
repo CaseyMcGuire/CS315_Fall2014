@@ -23,6 +23,7 @@ var pose = {
 var armSegmentLength = 2.3;
 var legSegmentLength = 2.4;
 var limbScalingVec = vec3.fromValues(0.3, 0.3, 0.3);
+var singleUnit = 1;
 
 //initialization function
 function init() {
@@ -78,13 +79,8 @@ function render(){
     
     //draw our torso
     var modelMatrix = mat4.create();
-    mat4.scale(modelMatrix, modelMatrix, vec3.fromValues(2,2,2));
+    mat4.scale(modelMatrix, modelMatrix, vec3.fromValues(1,2,1));
 
-    mat4.multiply(modelMatrix, modelMatrix, pose["torso"]);
-    
-  //  renderer.drawCube(modelMatrix, blue);
-
-    
     frameStack.push(mat4.clone(modelMatrix));
     drawUpperRightArm(frameStack);
 
@@ -116,8 +112,8 @@ function drawHead(stack){
     var curMatrix = stack.pop();
     
     
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, 1, 0));
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.5, 0.5, 0.5));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, singleUnit, 0));
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.5*singleUnit, 0.5*singleUnit, 0.5*singleUnit));
 
     mat4.multiply(curMatrix, curMatrix, pose["head"]);
 
@@ -128,21 +124,16 @@ function drawUpperRightArm(stack){
 
     var curMatrix = stack.pop();
     
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.3, 0.3, 0.3));
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(2 * armSegmentLength, 2, 0));
+    mat4.scale(curMatrix, curMatrix, limbScalingVec);
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(2 * armSegmentLength, 2*singleUnit, 0));
     
-   
-    
-    
-   // mat4.rotateZ(curMatrix, curMatrix, -Math.PI/2);
-   // mat4.rotateY(curMatrix, curMatrix, -Math.PI/2);
 
     mat4.multiply(curMatrix, curMatrix, pose["rightUpperArm"]);
     stack.push(mat4.clone(curMatrix));
 
 
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(armSegmentLength, 1, 1));
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(.5, 0, 0));
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(armSegmentLength, singleUnit, singleUnit));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(.5*singleUnit, 0, 0));
 
    
     drawLowerRightArm(stack);
@@ -155,14 +146,13 @@ function drawLowerRightArm(stack){
     var curMatrix = stack.pop();
     
   
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(1 + armSegmentLength, 0, 0));
-
-   // mat4.rotateZ(curMatrix, curMatrix, Math.PI/6);
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(singleUnit + armSegmentLength, 0, 0));
+  
     mat4.multiply(curMatrix, curMatrix, pose["rightLowerArm"]);
   
 
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(armSegmentLength, 1, 1));
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(1, 0, 0));
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(armSegmentLength, singleUnit, singleUnit));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(singleUnit, 0, 0));
    
     renderer.drawCube(curMatrix, color);
     
@@ -172,16 +162,16 @@ function drawUpperLeftArm(stack){
 
     var curMatrix = stack.pop();
 
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.3, 0.3, 0.3));
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues( -(2 * armSegmentLength), 2, 0));
+    mat4.scale(curMatrix, curMatrix, limbScalingVec);
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues( -(2 * armSegmentLength), 2*singleUnit, 0));
 
-   // mat4.rotateY(curMatrix, curMatrix, -Math.PI/2);
+  
     mat4.multiply(curMatrix, curMatrix, pose["leftUpperArm"]);
 
     stack.push(mat4.clone(curMatrix));
 
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(armSegmentLength, 1, 1));
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(.5, 0, 0));
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(armSegmentLength, singleUnit, singleUnit));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(.5*singleUnit, 0, 0));
 
     drawLowerLeftArm(stack);
 
@@ -195,13 +185,13 @@ function drawLowerLeftArm(stack){
 
     var curMatrix = stack.pop();
     
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(1 + armSegmentLength, 0, 0));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(singleUnit + armSegmentLength, 0, 0));
     
-    //  mat4.rotateZ(curMatrix, curMatrix, Math.PI/6);
+  
     mat4.multiply(curMatrix, curMatrix, pose["leftLowerArm"]);
 
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(armSegmentLength, 1, 1));
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(1, 0, 0));
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(armSegmentLength, singleUnit, singleUnit));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(singleUnit, 0, 0));
 
     renderer.drawCube(curMatrix, color);
 }
@@ -209,23 +199,19 @@ function drawLowerLeftArm(stack){
 function drawUpperLeftLeg(stack){
 
     var curMatrix = stack.pop();
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.3, 0.3, 0.3));
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(2, -(3 + legSegmentLength), 0));
+    mat4.scale(curMatrix, curMatrix, limbScalingVec);
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(legSegmentLength, -(3*singleUnit + legSegmentLength), 0));
 
     //ROTATION HERE
-//mat4.rotateX(curMatrix, curMatrix, -Math.PI/6);
     mat4.multiply(curMatrix, curMatrix, pose["leftUpperLeg"]);
 
     stack.push(mat4.clone(curMatrix));
     
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(1, legSegmentLength, 1));
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(singleUnit, legSegmentLength, singleUnit));
   
     drawLowerLeftLeg(stack);
 
     renderer.drawCube(curMatrix, color);
-
-   
-
 }
 
 function drawLowerLeftLeg(stack){
@@ -236,11 +222,10 @@ function drawLowerLeftLeg(stack){
     mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -(legSegmentLength), 0));
 
     //ROTATE
-   // mat4.rotateX(curMatrix, curMatrix, -Math.PI/6);
     mat4.multiply(curMatrix, curMatrix, pose["leftLowerLeg"]);
 
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(1, legSegmentLength, 1));
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -1, 0));
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(1, legSegmentLength, singleUnit));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -singleUnit, 0));
 
     renderer.drawCube(curMatrix, color);
 
@@ -249,16 +234,15 @@ function drawLowerLeftLeg(stack){
 function drawUpperRightLeg(stack){
     var curMatrix = stack.pop();
 
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(0.3, 0.3, 0.3));
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(-2, -(3 + legSegmentLength), 0));
+    mat4.scale(curMatrix, curMatrix, limbScalingVec);
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(-legSegmentLength, -(3*singleUnit + legSegmentLength), 0));
 
     //ROTATION HERE
-   // mat4.rotateX(curMatrix, curMatrix, Math.PI/6);
     mat4.multiply(curMatrix, curMatrix, pose["rightUpperLeg"]);
     
     stack.push(mat4.clone(curMatrix));
 
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(1, legSegmentLength, 1));
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(singleUnit, legSegmentLength, singleUnit));
     drawLowerRightLeg(stack);
 
     renderer.drawCube(curMatrix, color);
@@ -270,45 +254,18 @@ function drawLowerRightLeg(stack){
 
     mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -(legSegmentLength), 0));
 
-   // mat4.rotateX(curMatrix, curMatrix, Math.PI/6);
+    //draw lower 
     mat4.multiply(curMatrix, curMatrix, pose["rightLowerLeg"]);
     
-    mat4.scale(curMatrix, curMatrix, vec3.fromValues(1, legSegmentLength, 1));
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -1, 0));
+    mat4.scale(curMatrix, curMatrix, vec3.fromValues(singleUnit, legSegmentLength, singleUnit));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -singleUnit, 0));
 
     renderer.drawCube(curMatrix, color);
 
 }
 
-function calcZCoordinate(twoDVec){
-/*
-    vec2.normalize(twoDVec, twoDVec);
-    console.log("x" + twoDVec[0]);
-    console.log("y" + twoDVec[1]);
-    console.log("The length of this unit vector is" + vec2.length(twoDVec));
 
-    sqrt = Math.sqrt(Math.abs(1 - Math.pow(twoDVec[0], 2) - Math.pow(twoDVec[1], 2)));
-console.log("sqrt" + sqrt);
-    return sqrt;
-*/
-
-    x = (x - canvas.width);
-    y = (y - canvas.height);
-    var z;
-    var r = Math.pow(x, 2) + Math.pow(x, 2);
-    
-    if(r > 1.0){
-	var s = 1.0/Math.sqrt(r);
-	x = s * x;
-	y = s * y;
-	var z = 0;
-	return vec3.fromValues(x, y, z);
-    }
-    else{
-	var z = Math.sqrt(1.0 - r);
-    }
-}
-
+//get the angle between two vectors
 function getAngle(first, second){
     firstLength = vec3.length(first);
     secondLength = vec3.length(second);
@@ -316,10 +273,10 @@ function getAngle(first, second){
     return Math.acos(dotProd/(firstLength * secondLength));
 }
 
-function setupUnitVector(x, y){
+function setupUnitVector1(x, y){
 
     var vec;
-var radius = Math.min(canvas.height, canvas.width);
+    var radius = Math.min(canvas.height, canvas.width);
 
     x = (x - canvas.width/2)/radius;
     y = (y - canvas.height/2)/radius;
@@ -327,7 +284,7 @@ var radius = Math.min(canvas.height, canvas.width);
     var r = Math.pow(x, 2) + Math.pow(x, 2);
     
     if(r > 1.0){
-console.log("r is bigger than one " + r);
+	console.log("r is bigger than one " + r);
 	var s = 1.0/Math.sqrt(r);
 	x = s * x;
 	y = s * y;
@@ -340,6 +297,27 @@ console.log("r is bigger than one " + r);
     vec = vec3.fromValues(x, y, z);
     vec3.normalize(vec, vec);
     return vec;
+}
+
+//Returns a normalized vector from the center of the virtual ball
+//http://en.wikibooks.org/wiki/OpenGL_Programming/Modern_OpenGL_Tutorial_Arcball
+function setupUnitVector(x, y){
+
+    var vec = vec3.fromValues(1.0*x/canvas.width*2 - 1.0, 1.0*y/canvas.height*2 - 1.0, 0);
+
+    vec[1] = -vec[1];
+    
+    var opSquared = vec[0]*vec[0] + vec[1]*vec[1];
+
+    if(opSquared <= 1*1){
+	vec[2] = Math.sqrt(1*1 - opSquared);
+    }
+    else{
+	 vec3.normalize(vec, vec);
+    }
+
+    return vec;
+
 }
 
 //run script when ready
@@ -358,8 +336,8 @@ $(document).ready(function(){
 		    var oldX = e.pageX;
 		    var oldY = e.pageY;
 
-		    oldVec = setupUnitVector(e.pageX, e.pageY);// vec3.fromValues(oldX, oldY,  calcZCoordinate(vec2.fromValues(oldX, oldY)));
-		//    console.log(calcZCoordinate(e.pageX, e.pageY));
+		    oldVec = setupUnitVector(e.pageX, e.pageY);
+	
 		    vec3.normalize(oldVec, oldVec);
 		    console.log("mousedown");
 		    $("#glcanvas")
@@ -369,14 +347,14 @@ $(document).ready(function(){
 			    var newX = event.pageX;
 			    var newY = event.pageY;
 
-			    newVec = setupUnitVector(newX,newY); // vec3.fromValues(newX, newY, calcZCoordinate(vec2.fromValues(newX, newY)));
+			    newVec = setupUnitVector(newX,newY);
 			    vec3.normalize(newVec, newVec);
 			    normal = vec3.create();//place holder for our normal vector
 			    vec3.cross(normal, newVec, oldVec);
 			    mat4.rotate(renderer.viewMatrix, renderer.viewMatrix, getAngle(oldVec, newVec), normal);
 			    oldVec = newVec;
 			    render();
-			   // console.log("This is working too. X: "+ event.pageX);
+			  
 			});
 		})
 		.mouseup(function(){
