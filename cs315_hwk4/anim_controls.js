@@ -1,0 +1,33 @@
+$(document).ready(function(){ //make sure page is loaded
+
+  //save
+  $('#save_keyframe_button').click(function(){
+    var time;
+    do{
+        time = parseFloat(prompt("Enter a keyframe time (in seconds)"));
+    }while(isNaN(time) || time > 100 || time < 1);
+
+    save_keyframe(time);
+  });
+
+  //play
+  $('#play_button').click(function(){
+    play_animation();
+  });
+
+  //load
+  $('#load_anim_button').click(function(){
+    var filepath = 'assets/'+$('#anim_file_input').val()+'.json';
+    var json = Utils.loadJSON(filepath);
+    var animation = {};
+    for(var timekey in json)
+    {
+      var vals = json[timekey];
+      animation[timekey] = quat.fromValues(vals[0],vals[1],vals[2],vals[3]);
+    }
+
+    load_animation(animation);
+  });
+
+
+});

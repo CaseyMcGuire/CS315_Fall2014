@@ -1,0 +1,35 @@
+p {
+	margin:0 0 0.5em 0;
+}
+
+#glcanvas {
+	border: 1 solid black;
+}
+
+div.canvas {
+	width:600px; 
+	display:inline-block;
+}
+
+div.pickers {
+	display:inline-block; 
+	vertical-align:top;
+	margin-left: 1em;
+}
+
+div#keyframes {
+	font-size:small; 
+	font-family:Courier, monospace; 
+	border: 1 solid grey; 
+	width:600px;
+}
+
+div.controls {
+	padding-top: .5em;
+	padding-bottom: 1em;
+}
+
+.controls button {
+	margin-right:.5em;
+	font-size: large;
+}
