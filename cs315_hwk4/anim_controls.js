@@ -16,16 +16,19 @@ $(document).ready(function(){ //make sure page is loaded
   });
 
   //load
-  $('#load_anim_button').click(function(){
+ $('#load_anim_button').click(function(){
     var filepath = 'assets/'+$('#anim_file_input').val()+'.json';
     var json = Utils.loadJSON(filepath);
     var animation = {};
     for(var timekey in json)
     {
-      var vals = json[timekey];
-      animation[timekey] = quat.fromValues(vals[0],vals[1],vals[2],vals[3]);
+      animation[timekey] = {};
+      for (var bodyPart in json[timekey])
+      {
+        var vals = json[timekey][bodyPart];
+        animation[timekey][bodyPart] = quat.fromValues(vals[0],vals[1],vals[2],vals[3]);
+      }
     }
-
     load_animation(animation);
   });
 

@@ -1,62 +1,62 @@
 <html>
 <head>
-	<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
-	<title>Hwk4 - Dancing CubeBot</title>
-
-	<link href="styles/style.css" rel="stylesheet" type="text/css">
-
-	<script type="text/javascript" src="lib/jquery-1.11.1.min.js"></script>
-	<script type="text/javascript" src="lib/shader-utils.js"></script>
-	<script type="text/javascript" src="lib/webgl-utils.js"></script>
-	<script type="text/javascript" src="lib/gl-matrix-min.js"></script>
-	<script type="text/javascript" src="lib/utils.js"></script>
-
-	<script type="text/javascript" src="cube_renderer.js"></script>
-	<script type="text/javascript" src="anim_controls.js"></script>
-	<script type="text/javascript" src="cubebot.js"></script>
-
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+  <title>Hwk4 - Dancing CubeBot</title>
+  
+  <link href="styles/style.css" rel="stylesheet" type="text/css">
+  
+  <script type="text/javascript" src="lib/jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="lib/shader-utils.js"></script>
+  <script type="text/javascript" src="lib/webgl-utils.js"></script>
+  <script type="text/javascript" src="lib/gl-matrix-min.js"></script>
+  <script type="text/javascript" src="lib/utils.js"></script>
+  
+  <script type="text/javascript" src="cube_renderer.js"></script>
+  <script type="text/javascript" src="anim_controls.js"></script>
+  <script type="text/javascript" src="cubebot.js"></script>
+  
 </head>
 <body>
-	<div>
-		<div class="canvas">
-			<canvas id="glcanvas" width="600"  height="480">
-				If you see this, your browser doesn't support HTML5 canvas elements!
-			</canvas>
-		</div>
-		<div class="pickers">
-			<p><b>Adjusting:</b></p>
-			<form id="pickers">
-				<input type="radio" name="robot_part" value="torso">Torso<br>
-				<input type="radio" name="robot_part" value="head">Head</br>
-				<input type="radio" name="robot_part" value="leftUpperArm">Left Upper Arm</br>
-				<input type="radio" name="robot_part" value="leftLowerArm">Left Lower Arm</br>
-				<input type="radio" name="robot_part" value="rightUpperArm">Right Upper Arm</br>
-				<input type="radio" name="robot_part" value="rightLowerArm">Right Lower Arm</br>
-				<input type="radio" name="robot_part" value="leftUpperLeg">Left Upper Leg</br>
-				<input type="radio" name="robot_part" value="leftLowerLeg">Left Lower Leg</br>
-				<input type="radio" name="robot_part" value="rightUpperLeg">Right Upper Leg</br>
-				<input type="radio" name="robot_part" value="rightLowerLeg">Right Lower Leg<br>
-			</form>
-		</div>
+  <div>
+    <div class="canvas">
+      <canvas id="glcanvas" width="600"  height="480">
+	If you see this, your browser doesn't support HTML5 canvas elements!
+      </canvas>
+    </div>
+    <div class="pickers">
+      <p><b>Adjusting:</b></p>
+      <form id="pickers">
+	<input type="radio" name="robot_part" value="torso">Torso<br>
+	<input type="radio" name="robot_part" value="head">Head</br>
+	<input type="radio" name="robot_part" value="leftUpperArm">Left Upper Arm</br>
+	<input type="radio" name="robot_part" value="leftLowerArm">Left Lower Arm</br>
+	<input type="radio" name="robot_part" value="rightUpperArm">Right Upper Arm</br>
+	<input type="radio" name="robot_part" value="rightLowerArm">Right Lower Arm</br>
+	<input type="radio" name="robot_part" value="leftUpperLeg">Left Upper Leg</br>
+	<input type="radio" name="robot_part" value="leftLowerLeg">Left Lower Leg</br>
+	<input type="radio" name="robot_part" value="rightUpperLeg">Right Upper Leg</br>
+	<input type="radio" name="robot_part" value="rightLowerLeg">Right Lower Leg<br>
+      </form>
+    </div>
+  </div>
+  <div class="controls">
+    <p>
+      <button id="save_keyframe_button">Save keyframe</button>
+      <button id="play_button">Play Animation</button>
+    </p>
+  </div>
+  <div>
+    <div>
+      <p>
+	<input type="text" id="anim_file_input"> 
+	<button id="load_anim_button">Load Animation</button>
+      </p>
+      <div>
+	<p><b>Current Keyframes:</b></p>
+	<div id="keyframes">
+	  {}
 	</div>
-	<div class="controls">
-		<p>
-			<button id="save_keyframe_button">Save keyframe</button>
-			<button id="play_button">Play Animation</button>
-		</p>
-	</div>
-	<div>
-		<div>
-			<p>
-				<input type="text" id="anim_file_input"> 
-				<button id="load_anim_button">Load Animation</button>
-			</p>
-		<div>
-		<p><b>Current Keyframes:</b></p>
-		<div id="keyframes">
-			{}
-		</div>
-	</div>
-
+      </div>
+      
 </body>
 </html>
