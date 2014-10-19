@@ -42,6 +42,21 @@ var pose = {
     
 };
 
+var pivotCenter = {
+    
+    torso: vec3.fromValues(312, 248, 0),
+    head: vec3.fromValues(308, 182, 0),
+    leftUpperArm: vec3.fromValues(231, 216, 0),
+    leftLowerArm: vec3.fromValues(179, 221, 0),
+    rightUpperArm: vec3.fromValues(382, 216, 0),
+    rightLowerArm: vec3.fromValues(443, 219, 0),
+    leftUpperLeg:vec3.fromValues(344, 319, 0),
+    leftLowerLeg: vec3.fromValues(344, 380, 0),
+    rightUpperLeg: vec3.fromValues(271, 319, 0),
+    rightLowerLeg: vec3.fromValues(271, 379, 0)
+
+};
+
 //some constants
 var armSegmentLength = 2.3;
 var legSegmentLength = 2.4;
@@ -207,7 +222,7 @@ function drawLowerRightArm(stack){
     var curMatrix = stack.pop();
     
     //apply local transformation to our lower arm
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(singleUnit + armSegmentLength, 0, 0));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(2.1*singleUnit + armSegmentLength, 0, 0));
 
     var lowerRightArmRotation = mat4.create();
     mat4.fromQuat(lowerRightArmRotation, pose["rightLowerArm"]);
@@ -215,7 +230,7 @@ function drawLowerRightArm(stack){
 
 
     mat4.scale(curMatrix, curMatrix, vec3.fromValues(armSegmentLength, singleUnit, singleUnit));
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(singleUnit, 0, 0));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(.55*singleUnit, 0, 0));
    
     renderer.drawCube(curMatrix, green);
     
@@ -299,7 +314,7 @@ function drawLowerLeftLeg(stack){
 
     var curMatrix = stack.pop();
     
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -(legSegmentLength), 0));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -(1.8*legSegmentLength), 0));
 
     var lowerLeftLegRotation = mat4.create();
     mat4.fromQuat(lowerLeftLegRotation, pose["leftLowerLeg"]);
@@ -307,7 +322,7 @@ function drawLowerLeftLeg(stack){
 
     
     mat4.scale(curMatrix, curMatrix, vec3.fromValues(singleUnit, legSegmentLength, singleUnit));
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -1.5*singleUnit, 0));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -.7*singleUnit, 0));
 
     renderer.drawCube(curMatrix, yellow);
 
@@ -338,7 +353,7 @@ function drawLowerRightLeg(stack){
 
     var curMatrix = stack.pop();
 
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -(legSegmentLength), 0));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -(1.4*legSegmentLength), 0));
 
     var lowerRightLegRotation = mat4.create();
     mat4.fromQuat(lowerRightLegRotation, pose["rightLowerLeg"]);
@@ -346,7 +361,7 @@ function drawLowerRightLeg(stack){
     
 
     mat4.scale(curMatrix, curMatrix, vec3.fromValues(singleUnit, legSegmentLength, singleUnit));
-    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -singleUnit, 0));
+    mat4.translate(curMatrix, curMatrix, vec3.fromValues(0, -.6*singleUnit, 0));
 
     renderer.drawCube(curMatrix, yellow);
 }
@@ -377,12 +392,22 @@ function setupUnitVector(x, y){
     else{
 	 vec3.normalize(vec, vec);
     }
-
+    
+   
     return vec;
     
 }
 
+/*
+  Returns a rotation vector for body part rotations.
+
+  @param: {int} x
+  @param: {int} y
+  @param: {vec3} origin
+
+*/
 function setupRotationVector(x, y, origin){
+/*
     x = x/canvas.width;
     x = x - 0.5;
     x = x * 2;
@@ -393,6 +418,28 @@ function setupRotationVector(x, y, origin){
     y = y * 2;
     y = y * Math.sqrt(2)/2;
 
+    var z = Math.sqrt(1 - Math.pow(x, 2) - Math.pow(y, 2));
+    
+    var vec = vec3.fromValues(x, y, z);
+    vec3.subtract(vec, vec, origin);
+*/
+    var vec = vec3.fromValues(1.0*x/canvas.width*2 - 1.0, 1.0*y/canvas.height*2 - 1.0, 0);
+
+    vec[1] = -vec[1];
+    
+    var opSquared = vec[0]*vec[0] + vec[1]*vec[1];
+
+    if(opSquared <= 1*1){
+	vec[2] = Math.sqrt(1*1 - opSquared);
+    }
+    else{
+	 vec3.normalize(vec, vec);
+    }
+
+    origin = setupUnitVector(origin[0], origin[1]);
+  //  vec3.subtract(vec, vec, origin);
+  
+    return vec;
     
 }
 
@@ -436,13 +483,16 @@ function moveBodyPart(bodyPart, e){
     if(bodyPart == undefined || !mouseDown || shiftDown) return;
     console.log(bodyPart);
     console.log(pose[bodyPart]);
+
+    var x = e.pageX;// - $('#glcanvas').offset().left;
+    var y = e.pageY;// - $('#glcanvas').offset().top;
     if(oldBodyVec == undefined){
-	oldBodyVec = setupUnitVector(e.pageX, e.pageY);
+	oldBodyVec = setupRotationVector(x, y, pivotCenter[bodyPart]);
     }
       
     vec3.normalize(oldBodyVec, oldBodyVec);
 
-    newBodyVec = setupUnitVector(e.pageX, e.pageY);
+    newBodyVec = setupRotationVector(x, y, pivotCenter[bodyPart]);
     vec3.normalize(newBodyVec, newBodyVec);
 
     normal = vec3.create();
@@ -450,7 +500,7 @@ function moveBodyPart(bodyPart, e){
     vec3.normalize(normal, normal);
  
     temp = quat.create();
-    temp =  quat.setAxisAngle(temp, normal, getAngle(oldBodyVec, newBodyVec)/100);
+    temp =  quat.setAxisAngle(temp, normal, getAngle(oldBodyVec, newBodyVec)/10);
     quat.multiply(pose[bodyPart], pose[bodyPart], temp);
    
     render();
@@ -486,7 +536,8 @@ $(document).ready(function(){
 	.mousemove(function(e){
 	    moveCamera(e);
 	    var bodyPart = $("#pickers input[type='radio']:checked").val();
-	    console.log(pose[bodyPart]);
+	   // console.log(pose[bodyPart]);
+	    console.log("x: " + e.pageX + " y: " + e.pageY);
 	    moveBodyPart(bodyPart, e);
 	});
     
