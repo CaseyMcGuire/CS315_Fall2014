@@ -16,7 +16,7 @@ var yellow = [1.0, 1.0, 0.0, 1.0];
 var animations = {}
 
 var start_time;//the time that the animation started
-var counter = 2; //for keeping track of which frames we're on
+var counter; //for keeping track of which frames we're on
 
 var pose = {
     
@@ -47,17 +47,21 @@ var oldY;
 var newX;
 var newY;
 
+//vectors for camera rotation
 var newVec;
 var oldVec;
 
+//vectors for bodypart rotation
 var oldBodyVec;
 var newBodyVec;
 
 var sorted_keys;//the sorted keys of the animation object
 
+//the two frames to interpolate between
 var frameOneSeconds;
 var frameTwoSeconds;
 
+//determines whether the canvas is currently animating or not
 var isAnimating = false;
 
 //initialization function
@@ -84,7 +88,6 @@ function save_keyframe(time){
     for(part in pose){
 	newPose[part] = quat.clone(pose[part]);
     }
-
     animations[time] = newPose;
   
 }
@@ -104,37 +107,31 @@ function getBasicPose(){
   Sets the animation object to be the dance passed in as a parameter.
 */
 function load_animation(anim){
-    console.log(anim);
+ 
     animations = anim;
 }
 
 
 function play_animation(){
-    //if the animation has less than two arguments, there aren't enough frames
-    console.log("hello");
-    if(Object.keys(animations).length < 2){
+     //if the animation has less than two arguments, there aren't enough frames
+       if(Object.keys(animations).length < 2){
 	return;
     }
    
     //if the robot is current animating, setup our variables
     if(!isAnimating){
-
 	setupAnimation();
     }
   
     var currentTimeInSeconds = (Date.now() - start_time)/1000;
 
-    console.log("currentTimeinseconds");
-    console.log(currentTimeInSeconds);
-
     //if the current time elapsed is greater than the amount time allotted, then return
-    console.log("sorted keys slice");
-    console.log(sorted_keys.slice(-1));
+  
     if(currentTimeInSeconds >= sorted_keys.slice(-1)){
 	isAnimating = false;
 	return;
     }
-    console.log(counter);
+   
    
     //if the current time has passed the second frame, move to the next two frames
     if(currentTimeInSeconds >= frameTwoSeconds){
@@ -164,12 +161,13 @@ function animateBodyParts(tValue){
   This function sets up variables needed to properly animate the robot
 g*/
 function setupAnimation(){
-    animations[0] = getBasicPose();
+    animations[0] = getBasicPose();//pose the robot will start from
     sorted_keys = Object.keys(animations).sort(function(a,b){return a-b});
     start_time = Date.now();
     frameOneSeconds = sorted_keys[0];
     frameTwoSeconds = sorted_keys[1];
     isAnimating = true;
+    counter = 2;
 }
 
 /*
@@ -507,7 +505,7 @@ function moveCamera(e){
 
 */
 function moveBodyPart(bodyPart, e){
-    if(bodyPart == undefined || !mouseDown || shiftDown) return;
+    if(bodyPart == undefined || !mouseDown || shiftDown || isAnimating) return;
 
 
     var x = e.pageX;

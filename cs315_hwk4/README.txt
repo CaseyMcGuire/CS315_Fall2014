@@ -15,7 +15,7 @@ Casey McGuire
 * What is the name of the dance your robot performs?
 ***********************************************************************/
 
-Crazy Dance.
+Crazy Dance and its in the crazydance2.json file.
 
 
 
@@ -58,6 +58,8 @@ from the previous assignment is rendered correctly (that the pivots are in the r
 place, etc.). I found I had to go back and tinker with the pivots to make it look 
 right.
 
+-For some reason, whenever I saved a series of poses in a .json file, I couldn't change them. That is, I would create .json file with a series a poses and it would work fine. But when I tried to change that file and have the robot dance, it would still do the original dance. My only solution was to just keep creating new .json files.
+
 
 /**********************************************************************
  * List any other comments (about the assignment or your submission) 
@@ -65,5 +67,5 @@ right.
  * doing the assignment, whether you enjoyed doing it, etc.
  **********************************************************************/
 
-
+This assignment was fun and challenging.
 

@@ -20,9 +20,9 @@ $(document).ready(function(){ //make sure page is loaded
   //load
  $('#load_anim_button').click(function(){
     var filepath = 'assets/'+$('#anim_file_input').val()+'.json';
-     console.log(filepath);
+    
     var json = Utils.loadJSON(filepath);
-     console.log(json);
+    
     var animation = {};
     for(var timekey in json)
     {
