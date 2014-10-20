@@ -13,7 +13,7 @@ var green = [0.0, 1.0, 0.0, 1.0];
 var yellow = [1.0, 1.0, 0.0, 1.0];
 
 //this stores a hash of keyframes (or pose matrices)
-var animation = {}
+var animations = {}
 
 var start_time;//the time that the animation started
 var counter = 2; //for keeping track of which frames we're on
@@ -70,7 +70,7 @@ function init() {
   //set up the OpenGL program as a "renderer" object  
     renderer = new CubeRenderer(gl);
     save_keyframe(0);//save our basic robot as our base frame
-
+   
 }
 
 /*
@@ -85,26 +85,40 @@ function save_keyframe(time){
 	newPose[part] = quat.clone(pose[part]);
     }
 
-    animation[time] = newPose;
+    animations[time] = newPose;
   
+}
+
+/*
+  Returns a pose of the object with arms by his sides
+*/
+function getBasicPose(){
+    var basic = {};
+    for(bodypart in pose){
+	basic[bodypart] = quat.create();
+    }
+    return basic;
 }
 
 /*
   Sets the animation object to be the dance passed in as a parameter.
 */
 function load_animation(anim){
-    animation = anim;
+    console.log(anim);
+    animations = anim;
 }
 
 
 function play_animation(){
     //if the animation has less than two arguments, there aren't enough frames
-    if(Object.keys(animation).length < 2){
+    console.log("hello");
+    if(Object.keys(animations).length < 2){
 	return;
     }
-
+   
     //if the robot is current animating, setup our variables
     if(!isAnimating){
+
 	setupAnimation();
     }
   
@@ -120,7 +134,8 @@ function play_animation(){
 	isAnimating = false;
 	return;
     }
-
+    console.log(counter);
+   
     //if the current time has passed the second frame, move to the next two frames
     if(currentTimeInSeconds >= frameTwoSeconds){
 	frameOneSeconds = frameTwoSeconds;
@@ -141,15 +156,16 @@ function play_animation(){
 */
 function animateBodyParts(tValue){
     for(bodypart in pose){
-	quat.slerp(pose[bodypart], animation[frameOneSeconds][bodypart], animation[frameTwoSeconds][bodypart], tValue);
+	quat.slerp(pose[bodypart], animations[frameOneSeconds][bodypart], animations[frameTwoSeconds][bodypart], tValue);
     }
 }
 
 /*
   This function sets up variables needed to properly animate the robot
-*/
+g*/
 function setupAnimation(){
-    sorted_keys = Object.keys(animation).sort(function(a,b){return a-b});
+    animations[0] = getBasicPose();
+    sorted_keys = Object.keys(animations).sort(function(a,b){return a-b});
     start_time = Date.now();
     frameOneSeconds = sorted_keys[0];
     frameTwoSeconds = sorted_keys[1];

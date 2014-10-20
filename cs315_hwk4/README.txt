@@ -15,7 +15,7 @@ Casey McGuire
 * What is the name of the dance your robot performs?
 ***********************************************************************/
 
-<Replace this with your response!>
+Crazy Dance.
 
 
 
@@ -65,5 +65,5 @@ right.
  * doing the assignment, whether you enjoyed doing it, etc.
  **********************************************************************/
 
-<Replace this with your response!>
+
 
