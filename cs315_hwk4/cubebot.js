@@ -6,26 +6,17 @@ var renderer;
 //model transforms (model data found in cube.js)
 var frameStack = [];
 
+//the robot's colors
 var blue = [0.0, 0.0, 1.0, 1.0];
 var red = [1.0, 0.0, 0.0, 1.0];
 var green = [0.0, 1.0, 0.0, 1.0];
 var yellow = [1.0, 1.0, 0.0, 1.0];
 
+//this stores a hash of keyframes (or pose matrices)
+var animation = {}
 
-/*
-var pose = {
-  torso: mat4.create(),
-  head: mat4.create(),
-  leftUpperArm: mat4.create(),
-  leftLowerArm: mat4.create(),
-  rightUpperArm: mat4.create(),
-  rightLowerArm: mat4.create(),
-  leftUpperLeg: mat4.create(),
-  leftLowerLeg: mat4.create(),
-  rightUpperLeg: mat4.create(),
-  rightLowerLeg: mat4.create()
-};
-*/
+var start_time;//the time that the animation started
+var counter = 2; //for keeping track of which frames we're on
 
 var pose = {
     
@@ -42,20 +33,6 @@ var pose = {
     
 };
 
-var pivotCenter = {
-    
-    torso: vec3.fromValues(312, 248, 0),
-    head: vec3.fromValues(308, 182, 0),
-    leftUpperArm: vec3.fromValues(231, 216, 0),
-    leftLowerArm: vec3.fromValues(179, 221, 0),
-    rightUpperArm: vec3.fromValues(382, 216, 0),
-    rightLowerArm: vec3.fromValues(443, 219, 0),
-    leftUpperLeg:vec3.fromValues(344, 319, 0),
-    leftLowerLeg: vec3.fromValues(344, 380, 0),
-    rightUpperLeg: vec3.fromValues(271, 319, 0),
-    rightLowerLeg: vec3.fromValues(271, 379, 0)
-
-};
 
 //some constants
 var armSegmentLength = 2.3;
@@ -76,6 +53,13 @@ var oldVec;
 var oldBodyVec;
 var newBodyVec;
 
+var sorted_keys;//the sorted keys of the animation object
+
+var frameOneSeconds;
+var frameTwoSeconds;
+
+var isAnimating = false;
+
 //initialization function
 function init() {
   //initialize canvas and webgl
@@ -85,51 +69,101 @@ function init() {
 
   //set up the OpenGL program as a "renderer" object  
     renderer = new CubeRenderer(gl);
+    save_keyframe(0);//save our basic robot as our base frame
 
-  //  setupPoseMatrices(pose);
 }
 
-//this function sets up our pose
-function setupPoseMatrices(poses){
-    
-    //set up our torso
-   // mat4.rotate(poses["torso"], poses["torso"], Math.PI/4, [1,1,1]);
-    var torso = vec3.fromValues(1, 1, 1);
-    vec3.normalize(torso, torso);
-    quat.setAxisAngle(poses["torso"], torso, Math.PI/4);
+/*
+  Stores the passed parameter into the animation Object.
 
-   // mat4.rotate(poses["head"], poses["head"], 0, [0, 0, 1]);
-    quat.setAxisAngle(poses["head"], [0, 0, 1], 0);
-   
-  //  mat4.rotate(poses["rightUpperArm"], poses["rightUpperArm"], -Math.PI/2, [0, 0, 1]);
-   // mat4.rotate(poses["rightUpperArm"], poses["rightUpperArm"], -Math.PI/2, [0, 1, 0]);
-    quat.setAxisAngle(poses["rightUpperArm"], [0, 0, 1], -Math.PI/2);
-    quat.setAxisAngle(poses["rightUpperArm"], [0, 1, 0], -Math.PI/2);
+  @param time: The time the pose should be complete at
 
-   // mat4.rotate(poses["rightLowerArm"], poses["rightLowerArm"], Math.PI/6, [0, -1, 0]);
-    quat.setAxisAngle(poses["rightLowerArm"], [0, -1, 0], Math.PI/6);
-    
-    //mat4.rotate(poses["leftUpperArm"], poses["leftUpperArm"], -Math.PI/2, [0, 1, 0]);
-    quat.setAxisAngle(poses["leftUpperArm"], [0, 1, 0], -Math.PI/2);
+*/
+function save_keyframe(time){
+    var newPose = {};
+    for(part in pose){
+	newPose[part] = quat.clone(pose[part]);
+    }
 
-   // mat4.rotate(poses["leftLowerArm"], poses["leftLowerArm"], Math.PI/6, [0, 0, 1]);
-    quat.setAxisAngle(poses["leftLowerArm"], [0, 0, 1], Math.PI/6);
-
-   // mat4.rotate(poses["leftUpperLeg"], poses["leftUpperLeg"], -Math.PI/6, [1, 0, 0]);
-    quat.setAxisAngle(poses["leftUpperLeg"], [1, 0, 0], -Math.PI/6);
-
-  //  mat4.rotate(poses["leftLowerLeg"], poses["leftLowerLeg"], Math.PI/6, [1, 0, 0]);
-    quat.setAxisAngle(poses["leftLowerLeg"], [1, 0, 0], Math.PI/6);
-
-   // mat4.rotate(poses["rightUpperLeg"], poses["rightUpperLeg"], Math.PI/6, [1, 0, 0]);
-    quat.setAxisAngle(poses["rightUpperLeg"], [1, 0, 0], Math.PI/6);
-
-  //  mat4.rotate(poses["rightLowerLeg"], poses["rightLowerLeg"], Math.PI/6, [1, 0, 0]);
-    quat.setAxisAngle(poses["rightLowerLeg"], [1, 0, 0], Math.PI/6);
-
-   
+    animation[time] = newPose;
+  
 }
 
+/*
+  Sets the animation object to be the dance passed in as a parameter.
+*/
+function load_animation(anim){
+    animation = anim;
+}
+
+
+function play_animation(){
+    //if the animation has less than two arguments, there aren't enough frames
+    if(Object.keys(animation).length < 2){
+	return;
+    }
+
+    //if the robot is current animating, setup our variables
+    if(!isAnimating){
+	setupAnimation();
+    }
+  
+    var currentTimeInSeconds = (Date.now() - start_time)/1000;
+
+    console.log("currentTimeinseconds");
+    console.log(currentTimeInSeconds);
+
+    //if the current time elapsed is greater than the amount time allotted, then return
+    console.log("sorted keys slice");
+    console.log(sorted_keys.slice(-1));
+    if(currentTimeInSeconds >= sorted_keys.slice(-1)){
+	isAnimating = false;
+	return;
+    }
+
+    //if the current time has passed the second frame, move to the next two frames
+    if(currentTimeInSeconds >= frameTwoSeconds){
+	frameOneSeconds = frameTwoSeconds;
+	frameTwoSeconds = sorted_keys[counter];
+	counter++;
+    }
+
+    requestAnimationFrame(play_animation);
+    var current_t = getParametricValue(currentTimeInSeconds);
+    animateBodyParts(current_t);
+    
+   
+    render();
+}
+
+/*
+  Animates each bodypart of the robot according to the current frames and the passed interpolation value
+*/
+function animateBodyParts(tValue){
+    for(bodypart in pose){
+	quat.slerp(pose[bodypart], animation[frameOneSeconds][bodypart], animation[frameTwoSeconds][bodypart], tValue);
+    }
+}
+
+/*
+  This function sets up variables needed to properly animate the robot
+*/
+function setupAnimation(){
+    sorted_keys = Object.keys(animation).sort(function(a,b){return a-b});
+    start_time = Date.now();
+    frameOneSeconds = sorted_keys[0];
+    frameTwoSeconds = sorted_keys[1];
+    isAnimating = true;
+}
+
+/*
+  Returns the parametric value between frameOneSeconds and frameTwoSeconds
+*/
+function getParametricValue(currentTime){
+    numerator = currentTime - frameOneSeconds;
+    denominator = frameTwoSeconds - frameOneSeconds;
+    return numerator/denominator;
+}
 
 //render the scene
 function render(){
@@ -171,9 +205,9 @@ function render(){
 
     
     //draw our torso
+  
     renderer.drawCube(modelMatrix, blue);
 }
-
 
 
 
@@ -200,6 +234,7 @@ function drawUpperRightArm(stack){
     mat4.scale(curMatrix, curMatrix, limbScalingVec);
     mat4.translate(curMatrix, curMatrix, vec3.fromValues(2 * armSegmentLength, 2*singleUnit, 0));
 
+    //rotate our upper right arm
     var upperRightArmRotation = mat4.create();
     mat4.fromQuat(upperRightArmRotation, pose["rightUpperArm"]);
     mat4.multiply(curMatrix, curMatrix, upperRightArmRotation);
@@ -240,16 +275,18 @@ function drawUpperLeftArm(stack){
 
     var curMatrix = stack.pop();
 
+  
     //apply global transformation to left arm
     mat4.scale(curMatrix, curMatrix, limbScalingVec);
     mat4.translate(curMatrix, curMatrix, vec3.fromValues( -(1.9 * armSegmentLength), 2*singleUnit, 0));
 
-    
+ 
+    //rotate our upperleftArm
     var upperLeftArmRotation = mat4.create();
     mat4.fromQuat(upperLeftArmRotation, pose["leftUpperArm"]);
     mat4.multiply(curMatrix, curMatrix, upperLeftArmRotation);
-    
-    
+
+     
     //push copy on the stack
     stack.push(mat4.clone(curMatrix));
 
@@ -257,10 +294,10 @@ function drawUpperLeftArm(stack){
     mat4.scale(curMatrix, curMatrix, vec3.fromValues(armSegmentLength, singleUnit, singleUnit));
     mat4.translate(curMatrix, curMatrix, vec3.fromValues(-.5*singleUnit, 0, 0));
 
-   
+   //continue down transformation hierarchy
     drawLowerLeftArm(stack);
     
-
+   
     renderer.drawCube(curMatrix, green);
 }
 
@@ -269,17 +306,19 @@ function drawLowerLeftArm(stack){
     var curMatrix = stack.pop();
     
     //apply transformation to our matrix
-   
     mat4.translate(curMatrix, curMatrix, vec3.fromValues(-(2.1*singleUnit + armSegmentLength), 0, 0));
-
+ 
+    //rotate our lowerLeftArm
     var lowerLeftArmRotation = mat4.create();
     mat4.fromQuat(lowerLeftArmRotation, pose["leftLowerArm"]);
     mat4.multiply(curMatrix, curMatrix, lowerLeftArmRotation);
 
-
+   
     mat4.scale(curMatrix, curMatrix, vec3.fromValues(armSegmentLength, singleUnit, singleUnit));
+    
     mat4.translate(curMatrix, curMatrix, vec3.fromValues(-.6*singleUnit, 0, 0));
 
+ 
     renderer.drawCube(curMatrix, green);
 }
 
@@ -372,7 +411,20 @@ function getAngle(first, second){
     firstLength = vec3.length(first);
     secondLength = vec3.length(second);
     dotProd = vec3.dot(first, second);
-    return Math.acos(dotProd/(firstLength * secondLength));
+    return Math.acos(round(dotProd/(firstLength * secondLength)));
+}
+
+//This function deals with a floating point bug I was getting in the getAngle() method
+function round(num){
+    if(num > 1.0){
+	return 1.0;
+    }
+    else if(num < -1.0){
+	return -1.0;
+    }
+    else {
+	return num;
+    }
 }
 
 
@@ -399,54 +451,13 @@ function setupUnitVector(x, y){
 }
 
 /*
-  Returns a rotation vector for body part rotations.
-
-  @param: {int} x
-  @param: {int} y
-  @param: {vec3} origin
-
+  Moves the camera using arcball rotation.
 */
-function setupRotationVector(x, y, origin){
-/*
-    x = x/canvas.width;
-    x = x - 0.5;
-    x = x * 2;
-    x = x * Math.sqrt(2)/2;
-
-    y = y/canvas.height;
-    y =  y - 0.5;
-    y = y * 2;
-    y = y * Math.sqrt(2)/2;
-
-    var z = Math.sqrt(1 - Math.pow(x, 2) - Math.pow(y, 2));
-    
-    var vec = vec3.fromValues(x, y, z);
-    vec3.subtract(vec, vec, origin);
-*/
-    var vec = vec3.fromValues(1.0*x/canvas.width*2 - 1.0, 1.0*y/canvas.height*2 - 1.0, 0);
-
-    vec[1] = -vec[1];
-    
-    var opSquared = vec[0]*vec[0] + vec[1]*vec[1];
-
-    if(opSquared <= 1*1){
-	vec[2] = Math.sqrt(1*1 - opSquared);
-    }
-    else{
-	 vec3.normalize(vec, vec);
-    }
-
-    origin = setupUnitVector(origin[0], origin[1]);
-  //  vec3.subtract(vec, vec, origin);
-  
-    return vec;
-    
-}
-
 function moveCamera(e){
     //if the mouse isn't pressed down and the shift key isn't pressed down
-    //then don't rotate the camera
-    if(!mouseDown || !shiftDown) return;
+    //then don't rotate the camera. Also don't rotate if the robot
+    //is currently being animated
+    if(!mouseDown || !shiftDown || isAnimating) return;
     
     //if the first time camera adjustment, initialize the old vector
     if(oldVec == undefined) {
@@ -481,27 +492,31 @@ function moveCamera(e){
 */
 function moveBodyPart(bodyPart, e){
     if(bodyPart == undefined || !mouseDown || shiftDown) return;
-    console.log(bodyPart);
-    console.log(pose[bodyPart]);
 
-    var x = e.pageX;// - $('#glcanvas').offset().left;
-    var y = e.pageY;// - $('#glcanvas').offset().top;
+
+    var x = e.pageX;
+    var y = e.pageY;
     if(oldBodyVec == undefined){
-	oldBodyVec = setupRotationVector(x, y, pivotCenter[bodyPart]);
+	oldBodyVec = setupUnitVector(x, y);
     }
       
     vec3.normalize(oldBodyVec, oldBodyVec);
 
-    newBodyVec = setupRotationVector(x, y, pivotCenter[bodyPart]);
+  
+    newBodyVec = setupUnitVector(x, y);
     vec3.normalize(newBodyVec, newBodyVec);
 
     normal = vec3.create();
     vec3.cross(normal, newBodyVec, oldBodyVec);
     vec3.normalize(normal, normal);
- 
+
+
     temp = quat.create();
-    temp =  quat.setAxisAngle(temp, normal, getAngle(oldBodyVec, newBodyVec)/10);
+    temp =  quat.setAxisAngle(temp, normal, getAngle(oldBodyVec, newBodyVec));
+
     quat.multiply(pose[bodyPart], pose[bodyPart], temp);
+
+    oldBodyVec = newBodyVec;
    
     render();
     
@@ -524,7 +539,7 @@ $(document).ready(function(){
     $(document)
 	.mouseup(function(){
 	    oldVec = undefined;
-//	    oldBodyVec  = undefined;
+	    oldBodyVec  = undefined;
 	    mouseDown = false;
 	})
 	.mousedown(function() {
@@ -536,8 +551,6 @@ $(document).ready(function(){
 	.mousemove(function(e){
 	    moveCamera(e);
 	    var bodyPart = $("#pickers input[type='radio']:checked").val();
-	   // console.log(pose[bodyPart]);
-	    console.log("x: " + e.pageX + " y: " + e.pageY);
 	    moveBodyPart(bodyPart, e);
 	});
     

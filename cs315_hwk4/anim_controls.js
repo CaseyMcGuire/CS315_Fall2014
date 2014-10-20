@@ -8,6 +8,7 @@ $(document).ready(function(){ //make sure page is loaded
     }while(isNaN(time) || time > 100 || time < 1);
 
     save_keyframe(time);
+      $('#keyframes').html(JSON.stringify(animation));
   });
 
   //play
@@ -31,6 +32,10 @@ $(document).ready(function(){ //make sure page is loaded
     }
     load_animation(animation);
   });
+
+   
+
+   
 
 
 });

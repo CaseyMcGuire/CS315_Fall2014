@@ -64,6 +64,7 @@ function CubeRenderer(gl) {
       gl.uniform4fv(this.shaderProgram.colorHandle, color);
 
       //calculate and set normal matrix
+
       var normalMatrix = mat3.normalFromMat4(mat3.create(), modelMatrix);
       gl.uniformMatrix3fv(this.shaderProgram.normalMatrixHandle, false, normalMatrix);
 
