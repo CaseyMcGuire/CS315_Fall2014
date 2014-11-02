@@ -13,6 +13,8 @@ var projectionMatrix;
 //models
 var meshes = {};
 
+var light = vec3.fromValues(20, 20, 15);
+
 
 //helper function for working with radians
 function rad(degrees){
@@ -26,12 +28,14 @@ function init()
   if (shaderProgram < 0) { alert('Unable to initialize shaders.'); return; }
   gl.useProgram(shaderProgram); //specify to use the shaders
 
-  //grab handles for later (store in the program object to keep organized)
-  shaderProgram.vertexPositionHandle = gl.getAttribLocation(shaderProgram, "aPosition");
-  shaderProgram.vertexNormalHandle = gl.getAttribLocation(shaderProgram,"aNormal");
-  shaderProgram.colorHandle = gl.getUniformLocation(shaderProgram,"uColor");
-  shaderProgram.normalMatrixHandle = gl.getUniformLocation(shaderProgram,"uNormalMatrix");
-  shaderProgram.MVPmatrixHandle = gl.getUniformLocation(shaderProgram,"uModelViewProjectionMatrix");
+    //grab handles for later (store in the program object to keep organized)
+    shaderProgram.vertexPositionHandle = gl.getAttribLocation(shaderProgram, "aPosition");
+    shaderProgram.vertexNormalHandle = gl.getAttribLocation(shaderProgram,"aNormal");
+    shaderProgram.colorHandle = gl.getUniformLocation(shaderProgram,"uColor");
+    shaderProgram.normalMatrixHandle = gl.getUniformLocation(shaderProgram,"uNormalMatrix");
+    shaderProgram.MVPmatrixHandle = gl.getUniformLocation(shaderProgram,"uModelViewProjectionMatrix");
+    shaderProgram.PmatrixHandle = gl.getUniformLocation(shaderProgram, "uProjectionMatrix");
+    shaderProgram.lightPosHandle = gl.getUniformLocation(shaderProgram, "uLightPos");
 
   //basic params
   gl.clearColor(0.0,  0.0,  0.0,  1.0); //background color
@@ -55,11 +59,18 @@ function init()
   //initialize data models!
   OBJ.downloadMeshes(
     {
-      'teapot': 'assets/teapot.obj'
+	'teapot': 'assets/teapot.obj',
+	'streetLamp': 'assets/streetlamp.obj',
+	//source: http://tf3dm.com/3d-model/medieval-house-4919.html
+	'house': 'assets/house.obj',
+	'ground': 'assets/ground.obj',
+	'cube': 'assets/cube.obj'
     },
     function(downloadedMeshes) {
       meshes = downloadedMeshes;
-      for(var key in meshes) { OBJ.initMeshBuffers(gl, meshes[key]); } //helper method to create buffers
+      for(var key in meshes) { 
+	  OBJ.initMeshBuffers(gl, meshes[key]); 
+      } //helper method to create buffers
     }
   );
 }
@@ -75,18 +86,45 @@ function render(){
     return;
   }
 
+    gl.uniform3fv(shaderProgram.lightPosHandle, light);
+
   //model transformations
   var model = mat4.create();
-  mat4.scale(model, model, [0.4,0.4,0.4]); //scale down the teapot (it is large)
+  mat4.scale(model, model, [0.6,0.6,0.6]); //scale down the teapot (it is large)
 
   //other params
-  var color = [0.0, 0.0, 1.0, 1.0]; //blue
+    var color = [0.0, 0.0, 1.0, 1.0]; //blue
+    var green = [0.0, 1.0, 0.0, 1.0];
+    var red = [1.0, 0.0, 0.0, 1.0];
+    var translator = vec3.fromValues(0,-4,0);
+  var mesh = meshes['streetLamp'];
 
-  var mesh = meshes['teapot'];
 
-  //pass information into the shader
-  drawMesh(mesh, model, color); 
+    //pass information into the shader
+    mat4.translate(model, model, translator);
+    drawMesh(mesh, model, red); 
 
+
+    var houseModel = mat4.create();
+    mat4.translate(houseModel, houseModel, translator);
+    mat4.translate(houseModel, houseModel, [-5, 0, -1]);
+    mat4.scale(houseModel, houseModel, [0.004, 0.004, 0.004]);
+
+   // drawMesh(meshes['teapot'], model, color);
+   drawMesh(meshes['house'], houseModel, green);
+
+    var groundModel = mat4.create();
+    mat4.translate(groundModel, groundModel, translator);
+  //  mat4.scale(groundModel, groundModel, [15, 15, 5]);
+    mat4.rotateX(groundModel, groundModel, Math.PI/100);
+    drawMesh(meshes['ground'], groundModel, color);
+
+    var cubeModel = mat4.create();
+    mat4.translate(cubeModel, cubeModel, translator);
+    mat4.translate(cubeModel, cubeModel, [5.0, 0.0, 4.0]);
+    mat4.rotateX(cubeModel, cubeModel, Math.PI/16);
+    drawMesh(meshes['cube'], cubeModel, color);
+    
 }
 
 
@@ -121,22 +159,55 @@ function drawMesh(mesh, modelMatrix, color)
 
 }
 
-
+var dragged = null;
 
 //Initialize when ready
 $(document).ready(function(){
-  //html level stuff
-  canvas = $('#glcanvas')[0];
-  gl = WebGLUtils.setupWebGL( canvas );
-  if (!gl) { alert("Unable to initialize WebGL. Your browser may not support it."); return; }
-
-
-  init(); //set up shaders and models
-
-
-  //jQuery interaction binding would go here
-
-
-  render(); //start drawing!
-
+    //html level stuff
+    canvas = $('#glcanvas')[0];
+    gl = WebGLUtils.setupWebGL( canvas );
+    if (!gl) { alert("Unable to initialize WebGL. Your browser may not support it."); return; }
+    
+  
+    init(); //set up shaders and models
+    $("#glcanvas").mousedown(function(e){
+	var x = e.pageX - $('#glcanvas').offset().left;
+	var y = e.pageY - $('#glcanvas').offset().top;
+	dragged = trackBallCoords(x,y);
+    });
+    $("#glcanvas").mousemove(function(e){ 
+    if(dragged === null)
+	return;
+	
+	var x = e.pageX - $('#glcanvas').offset().left;
+	var y = e.pageY - $('#glcanvas').offset().top;
+	var end = trackBallCoords(x,y);
+	
+	var axis = vec3.cross(vec3.create(),dragged,end);
+	var angle = vec3.dot(dragged,end)/50;
+	
+	var rot = mat4.create();
+	mat4.rotate(rot, rot, angle, axis);
+	
+	vec3.transformMat4(light,light,rot);
+	console.log(light);
+	
+	render();
+	
+    });
+    $(document).mouseup(function(e){ dragged = null; });
+    
+    //jQuery interaction binding would go here
+    
+    
+    render(); //start drawing!
+    
 });
+
+function trackBallCoords(x,y)
+{
+    var sx = ((x/canvas.width)-0.5)*Math.sqrt(2);
+    var sy = -1*((y/canvas.height)-0.5)*Math.sqrt(2);
+    var sz = Math.sqrt(1 - sx*sx - sy*sy);
+    return vec3.fromValues(sx,sy,sz);
+}
