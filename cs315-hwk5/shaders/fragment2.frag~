@@ -1,0 +1,10 @@
+attribute vec3 aPosition; //vertex position
+attribute vec3 aNormal;	  //normal at the vertex
+
+uniform mat4 uModelViewProjectionMatrix;
+uniform mat3 uNormalMatrix;
+
+varying vec4 vColor; //output color for fragment
+uniform vec4 uColor;
+
+

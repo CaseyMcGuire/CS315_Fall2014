@@ -24,7 +24,7 @@ function rad(degrees){
 function init()
 {
   //initialize shaders
-  shaderProgram = ShaderUtils.initShaders(gl, 'shaders/gouraud_lit.vert', 'shaders/fragment.frag'); //load shaders
+  shaderProgram = ShaderUtils.initShaders(gl, 'shaders/pass.vert', 'shaders/phong.frag'); //load shaders
   if (shaderProgram < 0) { alert('Unable to initialize shaders.'); return; }
   gl.useProgram(shaderProgram); //specify to use the shaders
 
@@ -35,6 +35,7 @@ function init()
     shaderProgram.normalMatrixHandle = gl.getUniformLocation(shaderProgram,"uNormalMatrix");
     shaderProgram.MVPmatrixHandle = gl.getUniformLocation(shaderProgram,"uModelViewProjectionMatrix");
     shaderProgram.PmatrixHandle = gl.getUniformLocation(shaderProgram, "uProjectionMatrix");
+    shaderProgram.MVmatrixHandle = gl.getUniformLocation(shaderProgram, "uModelViewMatrix");
     shaderProgram.lightPosHandle = gl.getUniformLocation(shaderProgram, "uLightPos");
 
   //basic params
@@ -102,7 +103,7 @@ function render(){
 
     //pass information into the shader
     mat4.translate(model, model, translator);
-    drawMesh(mesh, model, red); 
+    drawMesh(mesh, model, green); 
 
 
     var houseModel = mat4.create();
@@ -117,7 +118,7 @@ function render(){
     mat4.translate(groundModel, groundModel, translator);
   //  mat4.scale(groundModel, groundModel, [15, 15, 5]);
     mat4.rotateX(groundModel, groundModel, Math.PI/100);
-    drawMesh(meshes['ground'], groundModel, color);
+    drawMesh(meshes['ground'], groundModel, green);
 
     var cubeModel = mat4.create();
     mat4.translate(cubeModel, cubeModel, translator);
@@ -148,6 +149,9 @@ function drawMesh(mesh, modelMatrix, color)
 
   //modelview
   var MVPmatrix = mat4.mul(mat4.create(), viewMatrix, modelMatrix);
+
+    //bind MV matrix to uModelViewMatrix in shader
+    gl.uniformMatrix4fv(shaderProgram.MVmatrixHandle, false, MVPmatrix);
 
   //calculate and set MVP matrix
   mat4.mul(MVPmatrix, projectionMatrix, MVPmatrix);
