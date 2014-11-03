@@ -61,9 +61,9 @@ function init()
   OBJ.downloadMeshes(
     {
 	'teapot': 'assets/teapot.obj',
-	'streetLamp': 'assets/streetlamp.obj',
+	'streetLamp': 'assets/streetlamp2.obj',
 	//source: http://tf3dm.com/3d-model/medieval-house-4919.html
-	'house': 'assets/house.obj',
+	'house': 'assets/house2.obj',
 	'ground': 'assets/ground.obj',
 	'cube': 'assets/cube.obj'
     },
