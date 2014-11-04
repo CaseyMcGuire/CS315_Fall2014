@@ -4,6 +4,7 @@ precision mediump float; //don't need high precision
 const vec3 Ka = vec3(0.5, 0.5, 0.5);
 const vec3 Kd = vec3(0.0, 1.0, 0.0);
 const vec3 Ks = vec3(1.0, 1.0, 1.0);
+
 const float shininess = 20.0;
 // const vec3 Ka = vec3(0.33, 0.22, 0.03);
 // const vec3 Kd = vec3(0.78, 0.57, 0.11);

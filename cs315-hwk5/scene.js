@@ -13,7 +13,8 @@ var projectionMatrix;
 //models
 var meshes = {};
 
-var light = vec3.fromValues(20, 20, 15);
+//var light = vec3.fromValues(20, 20, 15);
+var light = vec3.fromValues(0, 0, 10);
 
 
 //helper function for working with radians
@@ -163,6 +164,28 @@ function drawMesh(mesh, modelMatrix, color)
 
 }
 
+function tick(){
+    requestAnimationFrame(tick);
+    render();
+    animate();
+
+}
+
+var lastTime = new Date().getTime();
+var elapsedSeconds = new Date().getTime();
+var degreesPerMillisecond = 360/(120*1000);
+
+function animate(){
+    var timeNow = new Date().getTime();
+    var elapsed = lastTime - timeNow;
+    var rotate = mat4.create();
+    mat4.rotateX(rotate, rotate,rad(degreesPerMillisecond*elapsed));
+    vec3.transformMat4(light, light, rotate);
+  
+    lastTime = timeNow;
+		
+}
+
 var dragged = null;
 
 //Initialize when ready
@@ -174,6 +197,7 @@ $(document).ready(function(){
     
   
     init(); //set up shaders and models
+    tick();
     $("#glcanvas").mousedown(function(e){
 	var x = e.pageX - $('#glcanvas').offset().left;
 	var y = e.pageY - $('#glcanvas').offset().top;
