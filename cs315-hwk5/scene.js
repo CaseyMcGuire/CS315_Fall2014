@@ -173,7 +173,7 @@ function tick(){
 
 var lastTime = new Date().getTime();
 var elapsedSeconds = new Date().getTime();
-var degreesPerMillisecond = 360/(120*1000);
+var degreesPerMillisecond = 360/(120*100);
 
 function animate(){
     var timeNow = new Date().getTime();
