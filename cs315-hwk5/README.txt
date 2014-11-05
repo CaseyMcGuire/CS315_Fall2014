@@ -7,7 +7,7 @@
 * What is your name?
 ***********************************************************************/
 
-<Replace this with your response--remember to delete the angle brackets>
+Casey McGuire
 
 
 
@@ -15,7 +15,7 @@
 * What is depicted in your scene?
 ***********************************************************************/
 
-<Replace this with your response!>
+A house under a street lamp.
 
 
 
@@ -23,7 +23,7 @@
 * Did you complete any extensions to this assignment? If so, what?
 ***********************************************************************/
 
-<Replace this with your response!>
+No.
 
 
 
@@ -31,7 +31,7 @@
 * Approximately how many hours did you spend working on this assignment?
 ***********************************************************************/
 
-<Replace this with your response!>
+About 20.
 
 
 
@@ -41,7 +41,8 @@
  * How can I make this assignment better?
  **********************************************************************/
 
-<Replace this with your response!>
+-Since we haven't used the shaders in a while, this assignment seemed pretty
+difficult.
 
 
 
@@ -51,6 +52,11 @@
  * doing the assignment, whether you enjoyed doing it, etc.
  **********************************************************************/
 
-<Replace this with your response!>
+I'm not happy with this submission but I don't have any more time. Admittedly,
+I started this assignment rather late (Friday night) but I was pretty sick during the week.
+
+If I had more time I would:
+- make the transition between day and night more smooth.
+- ensure my house is not so brightly lit at night.
 
 

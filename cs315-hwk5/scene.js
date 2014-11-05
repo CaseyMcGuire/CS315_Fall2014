@@ -13,16 +13,16 @@ var projectionMatrix;
 //models
 var meshes = {};
 
-//var light = vec3.fromValues(20, 20, 15);
-//var light = vec3.fromValues(0, 0, 10);//THis seems to work okay..
-var light = vec3.fromValues(0, 0, 50);
-var lightLocation = vec3.fromValues(-8, 10, -.3);//this seems to work okay
-//var lightLocation = vec3.fromValues(10, 10, 10);
 
-var isDaytime = true;
+var light = vec3.fromValues(0, 0, 10);//This is the sun's direction.
+
+var lightLocation = vec3.fromValues(-8, 10, -.3);//this is the direction of the streetlamp
+
+
+var isDaytime = false;
 
 //variables to keep the passing of variables to the shader organized
-var materials = {};//for our 
+var materials = {};//a material JSON object
 
 
 //helper function for working with radians
@@ -55,44 +55,66 @@ function init()
     shaderProgram.La = gl.getUniformLocation(shaderProgram, "La");
     shaderProgram.ambianceAdjuster = gl.getUniformLocation(shaderProgram, "uAmbianceAdjuster");
 
+    //specular variables
+    shaderProgram.Ks = gl.getUniformLocation(shaderProgram, "Ks");
+    shaderProgram.Ls = gl.getUniformLocation(shaderProgram, "Ls");
+    shaderProgram.shininess = gl.getUniformLocation(shaderProgram, "shininess")
+
     /*
       Initialize our materials JSON object
+      It contains our ambiance according to whether its day or night.
+      It also contains the specular elements of our objects.
      */
 
 materials = {
     
     day: {
 	ambiance : {
-	    Ka : vec3.fromValues(0.5, 0.5, 0.5),
-	    La : vec3.fromValues(0.5, 0.5, 0.5)
-	},
-	specularity : {
-	    Ks : vec3.fromValues(1.0, 1.0, 1.0),
-	    Ls : vec3.fromValues(1.0, 1.0, 1.0)
+	    Ka : vec3.fromValues(0.1, 0.1, 0.1),
+	    La : vec3.fromValues(1.0, 1.0, 1.0)
 	}
-	
     },
     night: {
 	ambiance : {
-	    Ka : vec3.fromValues(0.5, 0.5, 0.5),
+	   // Ka : vec3.fromValues(0.5, 0.5, 0.5),
+	    Ka : vec3.fromValues(0.1, 0.1, 0.1),
 	    La : vec3.fromValues(0.1, 0.1, 0.1)
-	},
+	}
+    },
+    house : {
+	specularity : {
+	    Ks : vec3.fromValues(0.8, 0.8, 0.8),
+	    Ls : vec3.fromValues(0.8, 0.8, 0.8),
+	    shininess : 1.0
+	}
+    },
+    cube: {
+	specularity : {
+	    Ks : vec3.fromValues(1.0, 1.0, 1.0),
+	    Ls : vec3.fromValues(1.0, 1.0, 1.0),
+	    shininess : 1.0
+	}
+    },
+    streetlamp : {
+	specularity : {
+	    Ks : vec3.fromValues(1.0, 1.0, 1.0),
+	    Ls : vec3.fromValues(1.0, 1.0, 1.0),
+	    shininess : 1.0
+	}
+	
+    },
+    ground : {
 	specularity : {
 	    Ks : vec3.fromValues(0.1, 0.1, 0.1),
-	    Ls : vec3.fromValues(0.1, 0.1, 0.1)
+	    Ks : vec3.fromValues(0.1, 0.1, 0.1),
+	    shininess : 1.0
 	}
-
     }
-
+    
 }
 
-
-
     
-    shaderProgram.Ks = gl.getUniformLocation(shaderProgram, "Ks");
-    shaderProgram.Ls = gl.getUniformLocation(shaderProgram, "Ls");
-    shaderProgram.specularAdjuster = gl.getUniformLocation(shaderProgram, "uSpecularAdjuster");
-
+    
   //basic params
   gl.clearColor(0.0,  0.0,  0.0,  1.0); //background color
   gl.enable(gl.DEPTH_TEST); //enable depth culling
@@ -163,32 +185,34 @@ function render(){
 
     //pass information into the shader
     mat4.translate(model, model, translator);
-    drawMesh(mesh, model, green); 
+    drawMesh(mesh, model, green, materials["streetlamp"]["specularity"]["Ks"], materials["streetlamp"]["specularity"]["Ls"]); 
 
 
+    //put our house in the right place
     var houseModel = mat4.create();
     mat4.translate(houseModel, houseModel, translator);
-   // mat4.translate(houseModel, houseModel, [-5, 0, -1]);
-  //  mat4.translate(houseModel, houseModel, [-6, 1, 0]);
     mat4.translate(houseModel, houseModel, [-7, 1, 0]);
     mat4.scale(houseModel, houseModel, [0.003, 0.003, 0.003]);
 
-   // drawMesh(meshes['teapot'], model, color);
-   drawMesh(meshes['house'], houseModel, green);
+    //draw our house
+   drawMesh(meshes['house'], houseModel, green, materials["house"]["specularity"]["Ks"], materials["house"]["specularity"]["Ls"]);
 
+    //get our ground in the right place and draw it
     var groundModel = mat4.create();
     mat4.translate(groundModel, groundModel, translator);
-  //  mat4.scale(groundModel, groundModel, [15, 15, 5]);
     mat4.rotateX(groundModel, groundModel, Math.PI/100);
-    drawMesh(meshes['ground'], groundModel, green);
+    drawMesh(meshes['ground'], groundModel, green, materials["ground"]["specularity"]["Ks"], materials["house"]["specularity"]["Ls"]);
 
+
+    //get our cube in the right place and draw it
     var cubeModel = mat4.create();
     mat4.translate(cubeModel, cubeModel, translator);
     mat4.translate(cubeModel, cubeModel, [5.0, 0.0, 4.0]);
-   // mat4.translate(cubeModel, cubeModel, [-8, 10, -.3]);
     mat4.rotateX(cubeModel, cubeModel, Math.PI/16);
-    drawMesh(meshes['cube'], cubeModel, color);
+    drawMesh(meshes['cube'], cubeModel, color, materials["cube"]["specularity"]["Ks"], materials["cube"]["specularity"]["Ls"]);
 
+
+    //set the ambiance according to whether it is day or not
     if(isDaytime){
 	gl.uniform3fv(shaderProgram.Ka, materials["day"]["ambiance"]["Ka"]);
 	gl.uniform3fv(shaderProgram.La, materials["day"]["ambiance"]["La"]);
@@ -201,18 +225,14 @@ function render(){
 
 
 //helper method for drawing a mesh
-function drawMesh(mesh, modelMatrix, color)
+function drawMesh(mesh, modelMatrix, color, Ks, Ls)
 {
-
-    //set the ambiance for the scene. Perhaps this goes in the render() method?
-  //  gl.uniform3fv(shaderProgram.Ka, vec3.fromValues(0.5, 0.5, 0.5));
-   // gl.uniform3fv(shaderProgram.La, vec3.fromValues(0.1, 0.1, 0.1));
-
-    //set specularity
-    gl.uniform3fv(shaderProgram.Ks, vec3.fromValues(0.1, 0.1, 0.1));
-    gl.uniform3fv(shaderProgram.Ls, vec3.fromValues(0.1, 0.1, 0.1));
-
-  //vertex attributes
+    //set our specular elements according to the passed parameters.
+    gl.uniform3fv(shaderProgram.Ks, Ks);
+    gl.uniform3fv(shaderProgram.Ls, Ls);
+   
+    
+    //vertex attributes
   gl.bindBuffer(gl.ARRAY_BUFFER, mesh.positionBuffer);
   gl.vertexAttribPointer(shaderProgram.vertexPositionHandle, POSITION_DATA_SIZE, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(shaderProgram.vertexPositionHandle);
@@ -252,16 +272,22 @@ function tick(){
 
 var lastTime = new Date().getTime();
 var elapsedSeconds = new Date().getTime();
-var degreesPerMillisecond = 360/(120*100);
+var degreesPerMillisecond = 360/(120*500);
 var totalTime;
+var totalDegrees = 0;
 
 function animate(){
     var timeNow = new Date().getTime();
     var elapsed = lastTime - timeNow;
     
-  //  var elapsed = timeNow - lastTime;
-    console.log(elapsed);
+
     var rotate = mat4.create();
+
+    totalDegrees += Math.abs(degreesPerMillisecond*elapsed);
+    if(totalDegrees > 205) isDaytime = false;
+    if(totalDegrees > 300) isDaytime = true;
+    if(totalDegrees > 360) totalDegrees = 0;
+    console.log(totalDegrees);
 
     mat4.rotateX(rotate, rotate,rad(degreesPerMillisecond*elapsed));
     vec3.transformMat4(light, light, rotate);
@@ -282,38 +308,8 @@ $(document).ready(function(){
   
     init(); //set up shaders and models
     tick();
-    $("#glcanvas").mousedown(function(e){
-	var x = e.pageX - $('#glcanvas').offset().left;
-	var y = e.pageY - $('#glcanvas').offset().top;
-	dragged = trackBallCoords(x,y);
-    });
-    $("#glcanvas").mousemove(function(e){ 
-	console.log(e.pageX);
-    if(dragged === null)
-	return;
-	
-	var x = e.pageX - $('#glcanvas').offset().left;
-	var y = e.pageY - $('#glcanvas').offset().top;
 
-	console.log(lightLocation);
-	var end = trackBallCoords(x,y);
-	
-	var axis = vec3.cross(vec3.create(),dragged,end);
-	var angle = vec3.dot(dragged,end)/50;
-	
-	var rot = mat4.create();
-	mat4.rotate(rot, rot, angle, axis);
-	
-	vec3.transformMat4(light,light,rot);
-	console.log(light);
-	
-	render();
-	
-    });
-    $(document).mouseup(function(e){ dragged = null; });
-    
-    //jQuery interaction binding would go here
-    
+ 
     
     render(); //start drawing!
     

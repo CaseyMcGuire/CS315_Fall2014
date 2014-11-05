@@ -1,27 +1,18 @@
 precision mediump float; //don't need high precision
 
 //material
-//const vec3 Ka= vec3(0.5, 0.5, 0.5);
 uniform vec3 Ka;
 const vec3 Kd = vec3(0.0, 1.0, 0.0);
-//const vec3 Ks = vec3(1.0, 1.0, 1.0);
 uniform vec3 Ks;
 
-const float shininess = 1.0;
-// const vec3 Ka = vec3(0.33, 0.22, 0.03);
-// const vec3 Kd = vec3(0.78, 0.57, 0.11);
-// const vec3 Ks = vec3(0.99, 0.91, 0.81);
-// const float shininess = 27.8;
 
 
 //lights
-//const vec3 La = vec3(1,1,1);
 uniform vec3 La;
 const vec3 Ld = vec3(1,1,1);
-//uniform vec3 Ld;
-//const vec3 Ls = vec3(1,1,1);
 uniform vec3 Ls;
 
+const float shininess = 10.0;
 uniform bool uisDaytime;
 
 uniform vec3 uLightPos; //light direction
@@ -46,34 +37,34 @@ void main() {
 
 	if(!uisDaytime){
 
+		//at night, light comes from streetlamp
 		lightDir = normalize(uStreetLampLocation - vPosition);
 
 		reflection = normalize(reflect(-lightDir, vNormal));
 
-		//lower ambience at night (change with passed in variable)
-		ambient = Ka*La*.01;
-
-		//lower diffusion at night
-		diffuse = Ld*Kd*max(dot(vNormal, lightDir), 0.0)*.8;
+		//set our ambience and diffusion
+		ambient = Ka*La;
+		diffuse = Ld*Kd*max(dot(vNormal, lightDir), 0.0);
 
 		coefficient = max(dot(reflection, eyeDir), 0.0);
-	
 		coefficient = pow(coefficient, shininess);
 
 		specular = Ks*Ls*coefficient*0.1;
 
 		ulightWeighting = clamp(ambient + diffuse + specular, 0.0, 1.0);
+
+		//use attentuation
 		gl_FragColor =   vec4(directionalLightWeighting*.25*ulightWeighting, 1.0);
 			
 	
 	}else{
 	
+		//light comes from the sun
 		lightDir = normalize(uLightPos - vPosition);
 		reflection = normalize(reflect(-lightDir, vNormal));
 
+		//set ambiance and diffusion
 		ambient = Ka*La;
-
-		//directionalLightWeighting
 		diffuse = Ld*Kd*max(dot(vNormal, lightDir), 0.0);
 
 		coefficient = max(dot(reflection, eyeDir), 0.0);
@@ -82,13 +73,10 @@ void main() {
 
 		ulightWeighting = clamp(ambient + diffuse + specular, 0.0, 1.0);
 
+		//set lighting based on angle from sun
 		gl_FragColor =   vec4(ulightWeighting, 1.0);
 
 	}
 
 
-
-
-	//gl_FragColor = vec4(clamp(ambient+diffuse+specular, 0.0, 1.0), 1.0);
-	//gl_FragColor =   vec4(directionalLightWeighting*.25*ulightWeighting, 1.0);
 }
