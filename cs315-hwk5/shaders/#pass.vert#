@@ -32,7 +32,8 @@ void main() {
 
 
 
-	//if its daytime, there is no need for a light
+	//if its daytime, there is no need for a light direction weighting
+	//otherwise, 
   	if(uisDaytime){
 		directionalLightWeighting = 1.0;
  	 }else{

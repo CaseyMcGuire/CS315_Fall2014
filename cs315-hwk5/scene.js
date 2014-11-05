@@ -19,7 +19,7 @@ var light = vec3.fromValues(0, 0, 10);//This is the sun's direction.
 var lightLocation = vec3.fromValues(-8, 10, -.3);//this is the direction of the streetlamp
 
 
-var isDaytime = false;
+var isDaytime = true;
 
 //variables to keep the passing of variables to the shader organized
 var materials = {};//a material JSON object
@@ -284,19 +284,20 @@ function animate(){
     var rotate = mat4.create();
 
     totalDegrees += Math.abs(degreesPerMillisecond*elapsed);
+    //at about 205 degrees, the sun goes down so switch to nighttime
     if(totalDegrees > 205) isDaytime = false;
+    //at about 200 degrees, the sun is coming up so switch back to daytime
     if(totalDegrees > 300) isDaytime = true;
     if(totalDegrees > 360) totalDegrees = 0;
-    console.log(totalDegrees);
-
+   
+    //create a matrix representing a rotation around the x axis and use it to 
+    //transform the light vector
     mat4.rotateX(rotate, rotate,rad(degreesPerMillisecond*elapsed));
     vec3.transformMat4(light, light, rotate);
   
     lastTime = timeNow;
 		
 }
-
-var dragged = null;
 
 //Initialize when ready
 $(document).ready(function(){
@@ -308,17 +309,9 @@ $(document).ready(function(){
   
     init(); //set up shaders and models
     tick();
-
- 
     
     render(); //start drawing!
     
 });
 
-function trackBallCoords(x,y)
-{
-    var sx = ((x/canvas.width)-0.5)*Math.sqrt(2);
-    var sy = -1*((y/canvas.height)-0.5)*Math.sqrt(2);
-    var sz = Math.sqrt(1 - sx*sx - sy*sy);
-    return vec3.fromValues(sx,sy,sz);
-}
+
