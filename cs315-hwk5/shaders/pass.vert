@@ -10,8 +10,16 @@ uniform mat4 uModelViewProjectionMatrix;
 varying vec3 vNormal;	//output normal for fragment
 varying vec3 vPosition; //output modelview position for fragment
 
+uniform bool uisDaytime;
+
+uniform vec3 uPointLightingLocation;
+varying vec3 vLightWeighting;
+
+varying float directionalLightWeighting;
+
 void main() {
 
+    
 	vec3 vertexPos = vec3(uModelViewMatrix*vec4(aPosition,1.0));
 	vec3 normal = normalize(uNormalMatrix*aNormal);
 
@@ -20,5 +28,18 @@ void main() {
 	vPosition = vertexPos;
 
 
-  gl_Position = uModelViewProjectionMatrix * vec4(aPosition, 1.0);
+  	gl_Position = uModelViewProjectionMatrix * vec4(aPosition, 1.0);
+
+
+
+	//if its daytime, there is no need for a light
+  	if(uisDaytime){
+		vLightWeighting = vec3(1.0, 1.0, 1.0);
+ 	 }else{
+		vec3 lightDirection = normalize(uPointLightingLocation - vertexPos);
+		vec3 transformedNormal = uNormalMatrix * aNormal;
+		directionalLightWeighting = max(dot(transformedNormal, lightDirection), 0.0);
+		vLightWeighting = vec3(0.2, 0.2, 0.2) * directionalLightWeighting;
+  }
+	//	vLightWeighting = vec3(0.2, 0.2, 0.2);
 }

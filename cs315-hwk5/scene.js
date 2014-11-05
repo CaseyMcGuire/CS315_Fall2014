@@ -14,7 +14,15 @@ var projectionMatrix;
 var meshes = {};
 
 //var light = vec3.fromValues(20, 20, 15);
-var light = vec3.fromValues(0, 0, 10);
+//var light = vec3.fromValues(0, 0, 10);//THis seems to work okay..
+var light = vec3.fromValues(0, 0, 50);
+var lightLocation = vec3.fromValues(-8, 10, -.3);//this seems to work okay
+//var lightLocation = vec3.fromValues(10, 10, 10);
+
+var isDaytime = true;
+
+//variables to keep the passing of variables to the shader organized
+var materials = {};//for our 
 
 
 //helper function for working with radians
@@ -38,6 +46,52 @@ function init()
     shaderProgram.PmatrixHandle = gl.getUniformLocation(shaderProgram, "uProjectionMatrix");
     shaderProgram.MVmatrixHandle = gl.getUniformLocation(shaderProgram, "uModelViewMatrix");
     shaderProgram.lightPosHandle = gl.getUniformLocation(shaderProgram, "uLightPos");
+    shaderProgram.isDaytime = gl.getUniformLocation(shaderProgram, "uisDaytime");
+    shaderProgram.pointLightingLocation = gl.getUniformLocation(shaderProgram, "uPointLightingLocation");
+    shaderProgram.streetLampLocation = gl.getUniformLocation(shaderProgram, "uStreetLampLocation");
+    
+    //shader variables for ambiance
+    shaderProgram.Ka = gl.getUniformLocation(shaderProgram, "Ka");
+    shaderProgram.La = gl.getUniformLocation(shaderProgram, "La");
+    shaderProgram.ambianceAdjuster = gl.getUniformLocation(shaderProgram, "uAmbianceAdjuster");
+
+    /*
+      Initialize our materials JSON object
+     */
+
+materials = {
+    
+    day: {
+	ambiance : {
+	    Ka : vec3.fromValues(0.5, 0.5, 0.5),
+	    La : vec3.fromValues(0.5, 0.5, 0.5)
+	},
+	specularity : {
+	    Ks : vec3.fromValues(1.0, 1.0, 1.0),
+	    Ls : vec3.fromValues(1.0, 1.0, 1.0)
+	}
+	
+    },
+    night: {
+	ambiance : {
+	    Ka : vec3.fromValues(0.5, 0.5, 0.5),
+	    La : vec3.fromValues(0.1, 0.1, 0.1)
+	},
+	specularity : {
+	    Ks : vec3.fromValues(0.1, 0.1, 0.1),
+	    Ls : vec3.fromValues(0.1, 0.1, 0.1)
+	}
+
+    }
+
+}
+
+
+
+    
+    shaderProgram.Ks = gl.getUniformLocation(shaderProgram, "Ks");
+    shaderProgram.Ls = gl.getUniformLocation(shaderProgram, "Ls");
+    shaderProgram.specularAdjuster = gl.getUniformLocation(shaderProgram, "uSpecularAdjuster");
 
   //basic params
   gl.clearColor(0.0,  0.0,  0.0,  1.0); //background color
@@ -61,7 +115,7 @@ function init()
   //initialize data models!
   OBJ.downloadMeshes(
     {
-	'teapot': 'assets/teapot.obj',
+
 	'streetLamp': 'assets/streetlamp2.obj',
 	//source: http://tf3dm.com/3d-model/medieval-house-4919.html
 	'house': 'assets/house2.obj',
@@ -78,6 +132,8 @@ function init()
 }
 
 
+
+
 function render(){
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); //clear context
 
@@ -89,6 +145,9 @@ function render(){
   }
 
     gl.uniform3fv(shaderProgram.lightPosHandle, light);
+    gl.uniform1i(shaderProgram.isDaytime, isDaytime);
+    gl.uniform3fv(shaderProgram.pointLightingLocation, lightLocation);
+    gl.uniform3fv(shaderProgram.streetLampLocation, lightLocation);
 
   //model transformations
   var model = mat4.create();
@@ -99,7 +158,7 @@ function render(){
     var green = [0.0, 1.0, 0.0, 1.0];
     var red = [1.0, 0.0, 0.0, 1.0];
     var translator = vec3.fromValues(0,-4,0);
-  var mesh = meshes['streetLamp'];
+    var mesh = meshes['streetLamp'];
 
 
     //pass information into the shader
@@ -109,8 +168,10 @@ function render(){
 
     var houseModel = mat4.create();
     mat4.translate(houseModel, houseModel, translator);
-    mat4.translate(houseModel, houseModel, [-5, 0, -1]);
-    mat4.scale(houseModel, houseModel, [0.004, 0.004, 0.004]);
+   // mat4.translate(houseModel, houseModel, [-5, 0, -1]);
+  //  mat4.translate(houseModel, houseModel, [-6, 1, 0]);
+    mat4.translate(houseModel, houseModel, [-7, 1, 0]);
+    mat4.scale(houseModel, houseModel, [0.003, 0.003, 0.003]);
 
    // drawMesh(meshes['teapot'], model, color);
    drawMesh(meshes['house'], houseModel, green);
@@ -124,8 +185,17 @@ function render(){
     var cubeModel = mat4.create();
     mat4.translate(cubeModel, cubeModel, translator);
     mat4.translate(cubeModel, cubeModel, [5.0, 0.0, 4.0]);
+   // mat4.translate(cubeModel, cubeModel, [-8, 10, -.3]);
     mat4.rotateX(cubeModel, cubeModel, Math.PI/16);
     drawMesh(meshes['cube'], cubeModel, color);
+
+    if(isDaytime){
+	gl.uniform3fv(shaderProgram.Ka, materials["day"]["ambiance"]["Ka"]);
+	gl.uniform3fv(shaderProgram.La, materials["day"]["ambiance"]["La"]);
+    }else{
+	gl.uniform3fv(shaderProgram.Ka, materials["night"]["ambiance"]["Ka"]);
+	gl.uniform3fv(shaderProgram.La, materials["night"]["ambiance"]["La"]);
+    }    
     
 }
 
@@ -133,6 +203,15 @@ function render(){
 //helper method for drawing a mesh
 function drawMesh(mesh, modelMatrix, color)
 {
+
+    //set the ambiance for the scene. Perhaps this goes in the render() method?
+  //  gl.uniform3fv(shaderProgram.Ka, vec3.fromValues(0.5, 0.5, 0.5));
+   // gl.uniform3fv(shaderProgram.La, vec3.fromValues(0.1, 0.1, 0.1));
+
+    //set specularity
+    gl.uniform3fv(shaderProgram.Ks, vec3.fromValues(0.1, 0.1, 0.1));
+    gl.uniform3fv(shaderProgram.Ls, vec3.fromValues(0.1, 0.1, 0.1));
+
   //vertex attributes
   gl.bindBuffer(gl.ARRAY_BUFFER, mesh.positionBuffer);
   gl.vertexAttribPointer(shaderProgram.vertexPositionHandle, POSITION_DATA_SIZE, gl.FLOAT, false, 0, 0);
@@ -174,11 +253,16 @@ function tick(){
 var lastTime = new Date().getTime();
 var elapsedSeconds = new Date().getTime();
 var degreesPerMillisecond = 360/(120*100);
+var totalTime;
 
 function animate(){
     var timeNow = new Date().getTime();
     var elapsed = lastTime - timeNow;
+    
+  //  var elapsed = timeNow - lastTime;
+    console.log(elapsed);
     var rotate = mat4.create();
+
     mat4.rotateX(rotate, rotate,rad(degreesPerMillisecond*elapsed));
     vec3.transformMat4(light, light, rotate);
   
@@ -204,11 +288,14 @@ $(document).ready(function(){
 	dragged = trackBallCoords(x,y);
     });
     $("#glcanvas").mousemove(function(e){ 
+	console.log(e.pageX);
     if(dragged === null)
 	return;
 	
 	var x = e.pageX - $('#glcanvas').offset().left;
 	var y = e.pageY - $('#glcanvas').offset().top;
+
+	console.log(lightLocation);
 	var end = trackBallCoords(x,y);
 	
 	var axis = vec3.cross(vec3.create(),dragged,end);
