@@ -24,6 +24,8 @@ var isDaytime = true;
 //variables to keep the passing of variables to the shader organized
 var materials = {};//a material JSON object
 
+var texture;
+
 
 //helper function for working with radians
 function rad(degrees){
@@ -32,6 +34,8 @@ function rad(degrees){
 
 function init()
 {
+
+    console.log("we're in homework 6");
   //initialize shaders
   shaderProgram = ShaderUtils.initShaders(gl, 'shaders/pass.vert', 'shaders/phong.frag'); //load shaders
   if (shaderProgram < 0) { alert('Unable to initialize shaders.'); return; }
@@ -58,7 +62,13 @@ function init()
     //specular variables
     shaderProgram.Ks = gl.getUniformLocation(shaderProgram, "Ks");
     shaderProgram.Ls = gl.getUniformLocation(shaderProgram, "Ls");
-    shaderProgram.shininess = gl.getUniformLocation(shaderProgram, "shininess")
+    shaderProgram.shininess = gl.getUniformLocation(shaderProgram, "shininess");
+
+    //add texturing variables
+    //right now I'm just copying these so I don't know what they do..
+    shaderProgram.vertexTextureHandle = gl.getAttribLocation(shaderProgram, "aTexCoord");
+    shaderProgram.textureHandle = gl.getUniformLocation(shaderProgram, "uTexture");
+    shaderProgram.texturingHandle = gl.getUniformLocation(shaderProgram, "uTexturing");
 
     /*
       Initialize our materials JSON object
@@ -128,7 +138,7 @@ materials = {
     [0,0,0], //point we're looking at
     [0,1,0]  //up vector
     );
-  projectionMatrix = mat4.perspective(mat4.create(), //projection setup
+    projectionMatrix = mat4.perspective(mat4.create(), //projection setup
     //field of view, aspect ratio, near clipping, far clipping
     Math.PI/2, canvas.width/canvas.height, 0.1, 30
     );
@@ -151,6 +161,27 @@ materials = {
       } //helper method to create buffers
     }
   );
+
+    initTextures();
+
+    gl.uniform1i(shaderProgram.texturingHandle, 0);
+
+}
+
+function initTextures(){
+    var img = new Image();
+    img.onload = function(){ initTextureBuffer(img); };
+    img.src = "assets/img/cobblestone.jpg";
+}
+
+function initTextureBuffer(image){
+    texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.generateMipmap(gl.TEXTURE_2D);
 }
 
 
@@ -164,8 +195,13 @@ function render(){
     console.log("Meshes not yet loaded");
     requestAnimationFrame(render); //request another frame while we wait
     return;
-  }
-
+  }/*
+    if(texture === undefined){
+	console.log("texture not yet loaded");
+	requestAnimationFrame(render);
+	return;
+    }
+*/
     gl.uniform3fv(shaderProgram.lightPosHandle, light);
     gl.uniform1i(shaderProgram.isDaytime, isDaytime);
     gl.uniform3fv(shaderProgram.pointLightingLocation, lightLocation);
@@ -198,6 +234,7 @@ function render(){
    drawMesh(meshes['house'], houseModel, green, materials["house"]["specularity"]["Ks"], materials["house"]["specularity"]["Ls"]);
 
     //get our ground in the right place and draw it
+
     var groundModel = mat4.create();
     mat4.translate(groundModel, groundModel, translator);
     mat4.rotateX(groundModel, groundModel, Math.PI/100);
