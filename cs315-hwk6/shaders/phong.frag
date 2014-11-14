@@ -2,15 +2,17 @@ precision mediump float; //don't need high precision
 
 //material
 uniform vec3 Ka;
-const vec3 Kd = vec3(1.0, 0.0, 0.0);
+//const vec3 Kd = vec3(1.0, 0.0, 0.0);
 uniform vec3 Ks;
+uniform vec3 Kd;
 
 
 
 //lights
 uniform vec3 La;
-const vec3 Ld = vec3(1,1,1);
+//const vec3 Ld = vec3(1,1,1);
 uniform vec3 Ls;
+uniform vec3 Ld;
 
 const float shininess = 10.0;
 uniform bool uisDaytime;
@@ -27,7 +29,7 @@ varying float directionalLightWeighting;
 //new stuff
 varying vec2 vTexCoord;
 uniform sampler2D uTexture;//the texture buffer
-uniform bool isTextured;
+uniform bool uIsTextured;
 
 
 
@@ -39,9 +41,15 @@ void main() {
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
+	vec3 ka = Ka;
+	vec3 kd = Kd;
+	vec3 ks = Ks;
 	float coefficient;
-
-	if(!uisDaytime){
+	if(uIsTextured){
+		kd = vec3(texture2D(uTexture, vTexCoord));
+		ks = vec3(0.0);
+	}
+	if(uisDaytime == false){
 
 		//at night, light comes from streetlamp
 		lightDir = normalize(uStreetLampLocation - vPosition);
@@ -49,48 +57,44 @@ void main() {
 		reflection = normalize(reflect(-lightDir, vNormal));
 
 		//set our ambience and diffusion
-		ambient = Ka*La;
-		diffuse = Ld*Kd*max(dot(vNormal, lightDir), 0.0);
+		ambient = ka*La;
+		
+	
+
+		diffuse = Ld*kd*max(dot(vNormal, lightDir), 0.0);
 
 		coefficient = max(dot(reflection, eyeDir), 0.0);
 		coefficient = pow(coefficient, shininess);
 
-		specular = Ks*Ls*coefficient*0.1;
+		specular = ks*Ls*coefficient*0.1;
 
 		ulightWeighting = clamp(ambient + diffuse + specular, 0.0, 1.0);
 
 		//use attentuation
-
-		if(!isTextured){
 		gl_FragColor =   vec4(directionalLightWeighting*.25*ulightWeighting, 1.0);
-		}
-		else{
-			gl_FragColor = texture2D(uTexture, vTexCoord);
-		}	
+	
 	
 	}else{
-	
+		//is daytime
+		kd = vec3(texture2D(uTexture, vTexCoord));
+		ks = vec3(0.0);	
+
 		//light comes from the sun
 		lightDir = normalize(uLightPos - vPosition);
 		reflection = normalize(reflect(-lightDir, vNormal));
 
 		//set ambiance and diffusion
-		ambient = Ka*La;
-		diffuse = Ld*Kd*max(dot(vNormal, lightDir), 0.0);
+		ambient = ka*La;
+		diffuse = Ld*kd*max(dot(vNormal, lightDir), 0.0);
 
 		coefficient = max(dot(reflection, eyeDir), 0.0);
 		coefficient = pow(coefficient,shininess);
-		specular = Ks*Ls*coefficient;
+		specular = ks*Ls*coefficient;
 
 		ulightWeighting = clamp(ambient + diffuse + specular, 0.0, 1.0);
 
 		//set lighting based on angle from sun
-		if(!isTextured){
 		gl_FragColor =   vec4(ulightWeighting, 1.0);
-		}
-		else{
-			gl_FragColor = texture2D(uTexture, vTexCoord);
-		}
 
 	}
 

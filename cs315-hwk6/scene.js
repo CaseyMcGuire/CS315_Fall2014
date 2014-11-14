@@ -66,11 +66,15 @@ function init()
     shaderProgram.Ls = gl.getUniformLocation(shaderProgram, "Ls");
     shaderProgram.shininess = gl.getUniformLocation(shaderProgram, "shininess");
 
+    shaderProgram.Kd = gl.getUniformLocation(shaderProgram, "Kd");
+    shaderProgram.Ld = gl.getUniformLocation(shaderProgram, "Ld");
+
     //add texturing variables
     //right now I'm just copying these so I don't know what they do..
     shaderProgram.vertexTextureHandle = gl.getAttribLocation(shaderProgram, "aTexCoord");//this is there
     shaderProgram.textureHandle = gl.getUniformLocation(shaderProgram, "uTexture");//so is this
     shaderProgram.texturingHandle = gl.getUniformLocation(shaderProgram, "uTexturing");//I don't know what this is....
+    shaderProgram.isTextured = gl.getUniformLocation(shaderProgram, "uIsTextured");
    // shader
 
     /*
@@ -106,6 +110,10 @@ materials = {
 	    Ks : vec3.fromValues(1.0, 1.0, 1.0),
 	    Ls : vec3.fromValues(1.0, 1.0, 1.0),
 	    shininess : 1.0
+	}, 
+	diffuse : {
+	    Kd : vec3.fromValues(1.0, 0.0, 0.0),
+	    Ld : vec3.fromValues(1.0, 1.0, 1.0)
 	}
     },
     streetlamp : {
@@ -113,6 +121,22 @@ materials = {
 	    Ks : vec3.fromValues(1.0, 1.0, 1.0),
 	    Ls : vec3.fromValues(1.0, 1.0, 1.0),
 	    shininess : 1.0
+	},
+	diffuse : {
+	    Kd : vec3.fromValues(1.0, 0.0, 0.0),
+	    Ld : vec3.fromValues(1.0, 1.0, 1.0)
+	}
+	
+    },
+    wall : {
+	specularity : {
+	    Ks : vec3.fromValues(1.0, 1.0, 1.0),
+	    Ls : vec3.fromValues(1.0, 1.0, 1.0),
+	    shininess : 1.0
+	},
+	diffuse : {
+	    Kd : vec3.fromValues(1.0, 0.0, 0.0),
+	    Ld : vec3.fromValues(1.0, 1.0, 1.0)
 	}
 	
     },
@@ -121,13 +145,18 @@ materials = {
 	    Ks : vec3.fromValues(0.1, 0.1, 0.1),
 	    Ks : vec3.fromValues(0.1, 0.1, 0.1),
 	    shininess : 1.0
+	},
+	diffuse : {
+	    Kd : vec3.fromValues(1.0, 0.0, 0.0),
+	    Ld : vec3.fromValues(1.0, 1.0, 1.0)
 	}
+
     }
     
 }
 
-    
-    
+   
+  
   //basic params
   gl.clearColor(0.0,  0.0,  0.0,  1.0); //background color
   gl.enable(gl.DEPTH_TEST); //enable depth culling
@@ -207,7 +236,7 @@ function render(){
 	requestAnimationFrame(render);
 	return;
     }
-
+ 
     gl.uniform3fv(shaderProgram.lightPosHandle, light);
     gl.uniform1i(shaderProgram.isDaytime, isDaytime);
     gl.uniform3fv(shaderProgram.pointLightingLocation, lightLocation);
@@ -244,7 +273,7 @@ function render(){
     var groundModel = mat4.create();
     mat4.translate(groundModel, groundModel, translator);
     mat4.rotateX(groundModel, groundModel, Math.PI/100);
-    drawMesh(meshes['ground'], groundModel, green, materials["ground"]["specularity"]["Ks"], materials["house"]["specularity"]["Ls"], true);
+    drawMesh(meshes['ground'], groundModel, green, materials["ground"]["specularity"]["Ks"], materials["cube"]["specularity"]["Ls"], true, materials.cube.diffuse.Kd, materials.cube.diffuse.Ld);
 
 
     //get our cube in the right place and draw it
@@ -268,14 +297,18 @@ function render(){
 
 
 //helper method for drawing a mesh
-function drawMesh(mesh, modelMatrix, color, Ks, Ls, isTextured)
+function drawMesh(mesh, modelMatrix, color, Ks, Ls, isTextured, Kd, Ld)
 {
     //set our specular elements according to the passed parameters.
     gl.uniform3fv(shaderProgram.Ks, Ks);
     gl.uniform3fv(shaderProgram.Ls, Ls);
+
+    //set our diffuse elements according to our passed parameters
+    gl.uniform3fv(shaderProgram.Kd, Kd);
+    gl.uniform3fv(shaderProgram.Ld, Ld);
    
     
-    //vertex attributes
+    //vertex attributesxb
   gl.bindBuffer(gl.ARRAY_BUFFER, mesh.positionBuffer);
   gl.vertexAttribPointer(shaderProgram.vertexPositionHandle, POSITION_DATA_SIZE, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(shaderProgram.vertexPositionHandle);
@@ -288,7 +321,8 @@ function drawMesh(mesh, modelMatrix, color, Ks, Ls, isTextured)
     gl.uniform1i(shaderProgram.isTextured, isTextured);
   //  gl.uniform1i(shaderProgram.isDaytime, isDaytime);
 
-console.log("isTextured " + isTextured);
+    console.log("isTextured " + isTextured);
+    console.log("isDaytime " + isDaytime);
     if(isTextured == true){
 	
 	 gl.bindBuffer(gl.ARRAY_BUFFER, mesh.textureBuffer);
