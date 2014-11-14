@@ -13,6 +13,8 @@ var projectionMatrix;
 //models
 var meshes = {};
 
+var DEBUG = true;
+
 
 var light = vec3.fromValues(0, 0, 10);//This is the sun's direction.
 
@@ -35,7 +37,7 @@ function rad(degrees){
 function init()
 {
 
-    console.log("we're in homework 6");
+  //  console.log("we're in homework 6");
   //initialize shaders
   shaderProgram = ShaderUtils.initShaders(gl, 'shaders/pass.vert', 'shaders/phong.frag'); //load shaders
   if (shaderProgram < 0) { alert('Unable to initialize shaders.'); return; }
@@ -162,13 +164,17 @@ materials = {
     }
   );
 
-    initTextures();
+   // initTextures();
 
-    gl.uniform1i(shaderProgram.texturingHandle, 0);
+   // gl.uniform1i(shaderProgram.texturingHandle, 0);
 
 }
 
 function initTextures(){
+
+    if(DEBUG){
+	console.log("initTextures is being called");
+    }
     var img = new Image();
     img.onload = function(){ initTextureBuffer(img); };
     img.src = "assets/img/cobblestone.jpg";
@@ -185,8 +191,6 @@ function initTextureBuffer(image){
 }
 
 
-
-
 function render(){
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); //clear context
 
@@ -195,13 +199,13 @@ function render(){
     console.log("Meshes not yet loaded");
     requestAnimationFrame(render); //request another frame while we wait
     return;
-  }/*
-    if(texture === undefined){
-	console.log("texture not yet loaded");
-	requestAnimationFrame(render);
-	return;
-    }
-*/
+  }
+  //  if(texture === undefined){
+//	console.log("texture not yet loaded");
+//	requestAnimationFrame(render);
+//	return;
+  //  }
+
     gl.uniform3fv(shaderProgram.lightPosHandle, light);
     gl.uniform1i(shaderProgram.isDaytime, isDaytime);
     gl.uniform3fv(shaderProgram.pointLightingLocation, lightLocation);
@@ -221,7 +225,7 @@ function render(){
 
     //pass information into the shader
     mat4.translate(model, model, translator);
-    drawMesh(mesh, model, green, materials["streetlamp"]["specularity"]["Ks"], materials["streetlamp"]["specularity"]["Ls"]); 
+  //  drawMesh(mesh, model, green, materials["streetlamp"]["specularity"]["Ks"], materials["streetlamp"]["specularity"]["Ls"]); 
 
 
     //put our house in the right place
@@ -231,7 +235,7 @@ function render(){
     mat4.scale(houseModel, houseModel, [0.003, 0.003, 0.003]);
 
     //draw our house
-   drawMesh(meshes['house'], houseModel, green, materials["house"]["specularity"]["Ks"], materials["house"]["specularity"]["Ls"]);
+  // drawMesh(meshes['house'], houseModel, green, materials["house"]["specularity"]["Ks"], materials["house"]["specularity"]["Ls"]);
 
     //get our ground in the right place and draw it
 
@@ -246,7 +250,7 @@ function render(){
     mat4.translate(cubeModel, cubeModel, translator);
     mat4.translate(cubeModel, cubeModel, [5.0, 0.0, 4.0]);
     mat4.rotateX(cubeModel, cubeModel, Math.PI/16);
-    drawMesh(meshes['cube'], cubeModel, color, materials["cube"]["specularity"]["Ks"], materials["cube"]["specularity"]["Ls"]);
+  //  drawMesh(meshes['cube'], cubeModel, color, materials["cube"]["specularity"]["Ks"], materials["cube"]["specularity"]["Ls"]);
 
 
     //set the ambiance according to whether it is day or not
@@ -276,6 +280,16 @@ function drawMesh(mesh, modelMatrix, color, Ks, Ls)
   gl.bindBuffer(gl.ARRAY_BUFFER, mesh.normalBuffer);
   gl.vertexAttribPointer(shaderProgram.vertexNormalHandle, NORMAL_DATA_SIZE, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(shaderProgram.vertexNormalHandle);
+
+    //texture stuff..
+   // gl.bindBuffer(gl.ARRAY_BUFFER, mesh.textureBuffer);
+   // gl.vertexAttribPointer(shaderProgram.vertexTextureHandle, TEXTURE_DATA_SIZE, gl.FLOAT, false, 0, 0);
+   // gl.enableVertexAttribArray(shaderProgram.vertexTextureHandle);
+    
+    //pass in texture
+   // gl.activeTexture(gl.TEXTURE0);
+   // gl.bindTexture(gl.TEXTURE_2D, texture);
+   // gl.uniform1i(shaderProgram.textureHandle, 0);
 
   //set color
   gl.uniform4fv(shaderProgram.colorHandle, color);

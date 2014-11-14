@@ -24,6 +24,12 @@ varying vec3 vPosition; //output modelview position for fragment
 varying vec3 vLightWeighting;
 varying float directionalLightWeighting;
 
+//new stuff
+varying vec2 vTexCoord;
+uniform sampler2D uTexture;//the texture buffer
+uniform bool isTextured;
+
+
 
 void main() {
 
