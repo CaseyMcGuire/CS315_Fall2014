@@ -30,7 +30,7 @@ void main() {
 	
 	vNormal = normal;
 	vPosition = vertexPos;
-//	vTexCoord = aTexCoord;
+	vTexCoord = aTexCoord;
 
 //	I think this is for shadow.frag....
 //	vLightProjPos = uLightMVPMatrix * vec4(aPosition, 1.0);

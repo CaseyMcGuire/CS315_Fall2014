@@ -68,9 +68,10 @@ function init()
 
     //add texturing variables
     //right now I'm just copying these so I don't know what they do..
-    shaderProgram.vertexTextureHandle = gl.getAttribLocation(shaderProgram, "aTexCoord");
-    shaderProgram.textureHandle = gl.getUniformLocation(shaderProgram, "uTexture");
-    shaderProgram.texturingHandle = gl.getUniformLocation(shaderProgram, "uTexturing");
+    shaderProgram.vertexTextureHandle = gl.getAttribLocation(shaderProgram, "aTexCoord");//this is there
+    shaderProgram.textureHandle = gl.getUniformLocation(shaderProgram, "uTexture");//so is this
+    shaderProgram.texturingHandle = gl.getUniformLocation(shaderProgram, "uTexturing");//I don't know what this is....
+   // shader
 
     /*
       Initialize our materials JSON object
@@ -164,9 +165,9 @@ materials = {
     }
   );
 
-   // initTextures();
+    initTextures();
 
-   // gl.uniform1i(shaderProgram.texturingHandle, 0);
+    gl.uniform1i(shaderProgram.texturingHandle, 0);
 
 }
 
@@ -200,11 +201,12 @@ function render(){
     requestAnimationFrame(render); //request another frame while we wait
     return;
   }
-  //  if(texture === undefined){
-//	console.log("texture not yet loaded");
-//	requestAnimationFrame(render);
-//	return;
-  //  }
+//console.log("right about texture === undefined");
+   if(texture === undefined){
+	console.log("texture not yet loaded");
+	requestAnimationFrame(render);
+	return;
+    }
 
     gl.uniform3fv(shaderProgram.lightPosHandle, light);
     gl.uniform1i(shaderProgram.isDaytime, isDaytime);
@@ -225,7 +227,7 @@ function render(){
 
     //pass information into the shader
     mat4.translate(model, model, translator);
-  //  drawMesh(mesh, model, green, materials["streetlamp"]["specularity"]["Ks"], materials["streetlamp"]["specularity"]["Ls"]); 
+  //  drawMesh(mesh, model, green, materials["streetlamp"]["specularity"]["Ks"], materials["streetlamp"]["specularity"]["Ls"], false); 
 
 
     //put our house in the right place
@@ -235,14 +237,14 @@ function render(){
     mat4.scale(houseModel, houseModel, [0.003, 0.003, 0.003]);
 
     //draw our house
-  // drawMesh(meshes['house'], houseModel, green, materials["house"]["specularity"]["Ks"], materials["house"]["specularity"]["Ls"]);
+  // drawMesh(meshes['house'], houseModel, green, materials["house"]["specularity"]["Ks"], materials["house"]["specularity"]["Ls"], false);
 
     //get our ground in the right place and draw it
 
     var groundModel = mat4.create();
     mat4.translate(groundModel, groundModel, translator);
     mat4.rotateX(groundModel, groundModel, Math.PI/100);
-    drawMesh(meshes['ground'], groundModel, green, materials["ground"]["specularity"]["Ks"], materials["house"]["specularity"]["Ls"]);
+    drawMesh(meshes['ground'], groundModel, green, materials["ground"]["specularity"]["Ks"], materials["house"]["specularity"]["Ls"], true);
 
 
     //get our cube in the right place and draw it
@@ -250,7 +252,7 @@ function render(){
     mat4.translate(cubeModel, cubeModel, translator);
     mat4.translate(cubeModel, cubeModel, [5.0, 0.0, 4.0]);
     mat4.rotateX(cubeModel, cubeModel, Math.PI/16);
-  //  drawMesh(meshes['cube'], cubeModel, color, materials["cube"]["specularity"]["Ks"], materials["cube"]["specularity"]["Ls"]);
+  //  drawMesh(meshes['cube'], cubeModel, color, materials["cube"]["specularity"]["Ks"], materials["cube"]["specularity"]["Ls"], false);
 
 
     //set the ambiance according to whether it is day or not
@@ -266,7 +268,7 @@ function render(){
 
 
 //helper method for drawing a mesh
-function drawMesh(mesh, modelMatrix, color, Ks, Ls)
+function drawMesh(mesh, modelMatrix, color, Ks, Ls, isTextured)
 {
     //set our specular elements according to the passed parameters.
     gl.uniform3fv(shaderProgram.Ks, Ks);
@@ -282,22 +284,31 @@ function drawMesh(mesh, modelMatrix, color, Ks, Ls)
   gl.enableVertexAttribArray(shaderProgram.vertexNormalHandle);
 
     //texture stuff..
-   // gl.bindBuffer(gl.ARRAY_BUFFER, mesh.textureBuffer);
-   // gl.vertexAttribPointer(shaderProgram.vertexTextureHandle, TEXTURE_DATA_SIZE, gl.FLOAT, false, 0, 0);
-   // gl.enableVertexAttribArray(shaderProgram.vertexTextureHandle);
+
+    gl.uniform1i(shaderProgram.isTextured, isTextured);
+  //  gl.uniform1i(shaderProgram.isDaytime, isDaytime);
+
+console.log("isTextured " + isTextured);
+    if(isTextured == true){
+	
+	 gl.bindBuffer(gl.ARRAY_BUFFER, mesh.textureBuffer);
+	 gl.vertexAttribPointer(shaderProgram.vertexTextureHandle, TEXTURE_DATA_SIZE, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray(shaderProgram.vertexTextureHandle);
+	
+	//pass in texture
+	
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D, texture);
+	
+	gl.uniform1i(shaderProgram.textureHandle, 0);
+    }
+    //set color
+    gl.uniform4fv(shaderProgram.colorHandle, color);
     
-    //pass in texture
-   // gl.activeTexture(gl.TEXTURE0);
-   // gl.bindTexture(gl.TEXTURE_2D, texture);
-   // gl.uniform1i(shaderProgram.textureHandle, 0);
-
-  //set color
-  gl.uniform4fv(shaderProgram.colorHandle, color);
-
-  //calculate and set normal matrix (just based on model)
-  var normalMatrix = mat3.normalFromMat4(mat3.create(), modelMatrix);
-  gl.uniformMatrix3fv(shaderProgram.normalMatrixHandle, false, normalMatrix);
-
+    //calculate and set normal matrix (just based on model)
+    var normalMatrix = mat3.normalFromMat4(mat3.create(), modelMatrix);
+    gl.uniformMatrix3fv(shaderProgram.normalMatrixHandle, false, normalMatrix);
+    
   //modelview
   var MVPmatrix = mat4.mul(mat4.create(), viewMatrix, modelMatrix);
 

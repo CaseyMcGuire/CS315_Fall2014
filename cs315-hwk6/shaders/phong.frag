@@ -60,8 +60,13 @@ void main() {
 		ulightWeighting = clamp(ambient + diffuse + specular, 0.0, 1.0);
 
 		//use attentuation
+
+		if(!isTextured){
 		gl_FragColor =   vec4(directionalLightWeighting*.25*ulightWeighting, 1.0);
-			
+		}
+		else{
+			gl_FragColor = texture2D(uTexture, vTexCoord);
+		}	
 	
 	}else{
 	
@@ -80,7 +85,12 @@ void main() {
 		ulightWeighting = clamp(ambient + diffuse + specular, 0.0, 1.0);
 
 		//set lighting based on angle from sun
+		if(!isTextured){
 		gl_FragColor =   vec4(ulightWeighting, 1.0);
+		}
+		else{
+			gl_FragColor = texture2D(uTexture, vTexCoord);
+		}
 
 	}
 
