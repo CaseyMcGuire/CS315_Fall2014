@@ -7,7 +7,7 @@
 * What is your name?
 ***********************************************************************/
 
-<Replace this with your response--remember to delete the angle brackets>
+Casey McGuire
 
 
 
@@ -15,7 +15,7 @@
 * Did you complete any extensions to this assignment? If so, what?
 ***********************************************************************/
 
-<Replace this with your response!>
+No.
 
 
 
@@ -23,7 +23,7 @@
 * Approximately how many hours did you spend working on this assignment?
 ***********************************************************************/
 
-<Replace this with your response!>
+25ish.
 
 
 
@@ -33,7 +33,16 @@
  * How can I make this assignment better?
  **********************************************************************/
 
-<Replace this with your response!>
+I had quite a few problems with this assignment, as did many others it seems.
+-Considering the difficulty of the last assignment and the fact that we had
+to build off of it for this assignment, giving us only a little over a week
+to finish seemed overly ambitious. If repeating this assignment,
+I think giving more time and warning students to start (and seek help!) early 
+would be helpful.
+-Debugging the shaders was extremely difficult as I couldn't figure out the 
+state of each variable.
+
+
 
 
 
@@ -43,6 +52,8 @@
  * doing the assignment, whether you enjoyed doing it, etc.
  **********************************************************************/
 
-<Replace this with your response!>
+This assignment is partly done. I could only get the ground textured correctly.
+The ground and house seem to be lighted decently otherwise. Considering how long
+I worked on this assignment and how unfinished it is, I'm not satisfied with this submission but I can't delay turning it in anymore.
 
 
