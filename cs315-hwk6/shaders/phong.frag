@@ -45,10 +45,12 @@ void main() {
 	vec3 kd = Kd;
 	vec3 ks = Ks;
 	float coefficient;
+
 	if(uIsTextured){
 		kd = vec3(texture2D(uTexture, vTexCoord));
 		ks = vec3(0.0);
 	}
+
 	if(uisDaytime == false){
 
 		//at night, light comes from streetlamp
@@ -76,8 +78,7 @@ void main() {
 	
 	}else{
 		//is daytime
-		kd = vec3(texture2D(uTexture, vTexCoord));
-		ks = vec3(0.0);	
+	
 
 		//light comes from the sun
 		lightDir = normalize(uLightPos - vPosition);

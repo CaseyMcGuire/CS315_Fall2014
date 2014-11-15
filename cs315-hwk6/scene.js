@@ -103,6 +103,10 @@ materials = {
 	    Ks : vec3.fromValues(0.8, 0.8, 0.8),
 	    Ls : vec3.fromValues(0.8, 0.8, 0.8),
 	    shininess : 1.0
+	}, 
+	diffuse : {
+	    Kd : vec3.fromValues(1.0, 0.0, 0.0),
+	    Ld : vec3.fromValues(1.0, 1.0, 1.0)
 	}
     },
     cube: {
@@ -198,6 +202,7 @@ materials = {
 
     gl.uniform1i(shaderProgram.texturingHandle, 0);
 
+
 }
 
 function initTextures(){
@@ -253,12 +258,12 @@ function render(){
     var translator = vec3.fromValues(0,-4,0);
     var mesh = meshes['streetLamp'];
 
-
     //pass information into the shader
     mat4.translate(model, model, translator);
-  //  drawMesh(mesh, model, green, materials["streetlamp"]["specularity"]["Ks"], materials["streetlamp"]["specularity"]["Ls"], false); 
+    console.log("streetlamp");
+    drawMesh(mesh, model, green, materials["streetlamp"]["specularity"]["Ks"], materials["streetlamp"]["specularity"]["Ls"], false, materials.streetlamp.diffuse.Kd, materials.streetlamp.diffuse.Ld); 
 
-
+    console.log("Hello");
     //put our house in the right place
     var houseModel = mat4.create();
     mat4.translate(houseModel, houseModel, translator);
@@ -266,7 +271,7 @@ function render(){
     mat4.scale(houseModel, houseModel, [0.003, 0.003, 0.003]);
 
     //draw our house
-  // drawMesh(meshes['house'], houseModel, green, materials["house"]["specularity"]["Ks"], materials["house"]["specularity"]["Ls"], false);
+   drawMesh(meshes['house'], houseModel, green, materials["house"]["specularity"]["Ks"], materials["house"]["specularity"]["Ls"], false, materials.house.diffuse.Kd, materials.house.diffuse.Ld);
 
     //get our ground in the right place and draw it
 
@@ -281,7 +286,8 @@ function render(){
     mat4.translate(cubeModel, cubeModel, translator);
     mat4.translate(cubeModel, cubeModel, [5.0, 0.0, 4.0]);
     mat4.rotateX(cubeModel, cubeModel, Math.PI/16);
-  //  drawMesh(meshes['cube'], cubeModel, color, materials["cube"]["specularity"]["Ks"], materials["cube"]["specularity"]["Ls"], false);
+    console.log("cube");
+    drawMesh(meshes['cube'], cubeModel, color, materials["cube"]["specularity"]["Ks"], materials["cube"]["specularity"]["Ls"], false,materials.cube.diffuse.Kd, materials.cube.diffuse.Ld);
 
 
     //set the ambiance according to whether it is day or not
@@ -306,9 +312,21 @@ function drawMesh(mesh, modelMatrix, color, Ks, Ls, isTextured, Kd, Ld)
     //set our diffuse elements according to our passed parameters
     gl.uniform3fv(shaderProgram.Kd, Kd);
     gl.uniform3fv(shaderProgram.Ld, Ld);
+
+
+    gl.uniform1i(shaderProgram.isTextured, isTextured);
+
+    if(DEBUG){
+	console.log(Kd);
+	console.log( Ld);
+	console.log( Ks);
+	console.log( Ls);
+
+    }
    
-    
+   
     //vertex attributesxb
+
   gl.bindBuffer(gl.ARRAY_BUFFER, mesh.positionBuffer);
   gl.vertexAttribPointer(shaderProgram.vertexPositionHandle, POSITION_DATA_SIZE, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(shaderProgram.vertexPositionHandle);
@@ -318,24 +336,23 @@ function drawMesh(mesh, modelMatrix, color, Ks, Ls, isTextured, Kd, Ld)
 
     //texture stuff..
 
-    gl.uniform1i(shaderProgram.isTextured, isTextured);
+  
   //  gl.uniform1i(shaderProgram.isDaytime, isDaytime);
 
     console.log("isTextured " + isTextured);
     console.log("isDaytime " + isDaytime);
-    if(isTextured == true){
-	
+   //  if(isTextured == true){
+	 
 	 gl.bindBuffer(gl.ARRAY_BUFFER, mesh.textureBuffer);
 	 gl.vertexAttribPointer(shaderProgram.vertexTextureHandle, TEXTURE_DATA_SIZE, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(shaderProgram.vertexTextureHandle);
-	
-	//pass in texture
-	
-	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture(gl.TEXTURE_2D, texture);
-	
-	gl.uniform1i(shaderProgram.textureHandle, 0);
-    }
+	 gl.enableVertexAttribArray(shaderProgram.vertexTextureHandle);
+	 
+	 //pass in texture
+	 gl.activeTexture(gl.TEXTURE0);
+	 gl.bindTexture(gl.TEXTURE_2D, texture);
+	 
+	 gl.uniform1i(shaderProgram.textureHandle, 0);
+  //  }
     //set color
     gl.uniform4fv(shaderProgram.colorHandle, color);
     

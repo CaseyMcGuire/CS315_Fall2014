@@ -11,6 +11,7 @@ varying vec3 vNormal;	//output normal for fragment
 varying vec3 vPosition; //output modelview position for fragment
 
 uniform bool uisDaytime;
+uniform bool uIsTextured;
 
 uniform vec3 uPointLightingLocation;
 varying vec3 vLightWeighting;
@@ -30,7 +31,10 @@ void main() {
 	
 	vNormal = normal;
 	vPosition = vertexPos;
-	vTexCoord = aTexCoord;
+
+	//if(uIsTextured){
+		vTexCoord = aTexCoord;
+//	}
 
 //	I think this is for shadow.frag....
 //	vLightProjPos = uLightMVPMatrix * vec4(aPosition, 1.0);
