@@ -95,6 +95,59 @@ var Triangle = function(p1, p2, p3){
     this.v2 = p2;
     this.v3 = p3;
 };
+Triangle.prototype.intersects = function(ray){
+
+    //this implements the Moller-Trumbore intersection algorithm
+    //http://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+    var edge1 = vec3.fromValues(0, 0, 0);
+    var edge2 = vec3.fromValues(0, 0, 0);
+    var P = vec3.fromValues(0, 0, 0);
+    var Q = vec3.fromValues(0, 0, 0); 
+    var T = vec3.fromValues(0, 0, 0);
+    var determinant, inverseDeterminant, u, v;
+    var t;
+
+    //find vectors for two edges sharing v1
+    vec3.subtract(edge1, this.v2, this.v1);
+    vec3.subtract(edge2, this.v3, this.v1);
+
+    //begin calculating determinant
+    vec3.cross(P, ray.direction, edge2);
+
+    //if determinant is near zero, ray lies in plane of triangle
+    determinant = vec3.dot(edge1, P);
+    
+    //NOT CULLING
+    if(determinant > -EPSILON && determinant < EPSILON) return null;
+    inverseDeterminant = 1/determinant;
+
+    //calculate distance from v1 to ray origin
+    vec3.subtract(T, ray.origin, this.v1);
+
+    //calculate u parameter and test bound
+    u = vec3.dot(T, P) * inverseDeterminant;
+
+    //return null if the intersection lies outside of the triangle
+    if(u < 0 || u > 1) return null;
+
+    //prepare to test v parameter
+    vec3.cross(Q, T, edge1);
+    //calculate V parameter and test bound
+    v = vec3.dot(ray.direction, Q) * inverseDeterminant;
+    //The intersection lies outside of the triangle
+    if(v < 0 || u + v > 1) return null;
+
+    t = vec3.dot(edge2, Q) * inverseDeterminant;
+    
+    //if we have an intersection
+    if(t > EPSILON){
+	return new Intersection(t);
+    }
+
+    //no hit
+    return null;
+
+};
 var Material = function(){};
 var AmbientLight = function(){};
 var PointLight = function(){};
@@ -115,8 +168,8 @@ function init() {
   context = canvas.getContext("2d");
   imageBuffer = context.createImageData(canvas.width, canvas.height); //buffer for pixels
 
-  loadSceneFile("assets/SphereTest.json");
-//loadSceneFile("assets/TriangleTest.json");
+ // loadSceneFile("assets/SphereTest.json");
+loadSceneFile("assets/TriangleTest.json");
 
 
 }
@@ -183,7 +236,7 @@ function getSurfaceShape(surface){
 	return new Sphere(surface.center, surface.radius, surface.material);
     }
     else{
-	return new Triangle();
+	return new Triangle(surface.p1,surface.p2,surface.p3);
     }
 
 }
