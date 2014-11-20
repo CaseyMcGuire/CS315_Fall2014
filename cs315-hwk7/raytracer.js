@@ -32,14 +32,69 @@ var Camera = function(eye, up, at, fovy, aspect){
     this.w = w;
 };
 Camera.prototype.castRay = function(x, y){
-    var u = (w * x/(canvas.width - 1)) - (w/2.0);
-    var v = (-h * y/(canvas.height - 1)) + (h/2.0);
-   // var direction = u*up + v*
+    var u = (this.w * x/(canvas.width - 1)) - (this.w/2.0);
+    var v = (-this.h * y/(canvas.height - 1)) + (this.h/2.0);
+    //calculate direction
+    var direction = vec3.fromValues(u, v, -1);
+    var origin = vec3.fromValues(0, 0, 0);
+    return new Ray(direction, origin);
+    //return new ray with origin at (0,0,0) and direction
 };
 
-var Sphere = function(){};
+
+
+var Sphere = function(center, radius, material){
+    this.center = center;
+    this.radius = radius;
+    this.material = material;
+};
+Sphere.prototype.intersects = function(ray){
+    //first calculate the determinant to see how many real solutions there are
+    var RayDebug = false;
+    if(RayDebug){
+	console.log("Ray's direction is "+ ray.direction);
+	
+    }
+    var a = vec3.dot(ray.direction, ray.direction);//d dot d
+    var b = vec3.dot(ray.direction, vec3.subtract([0,0,0], ray.origin, this.center));//2d dot (e - c)
+    var c = vec3.dot(vec3.subtract([0,0,0], ray.origin, this.center),vec3.subtract([0,0,0], ray.origin, this.center));
+ var discriminant = Math.pow(b, 2) - a * (c - Math.pow(this.radius, 2));
+    
+    if(RayDebug){
+	console.log("a" + a);
+	console.log("b" + b);
+	console.log("c" + c);
+	console.log("discrimant" + discriminant);
+    }
+ 
+    //if the discriminant is negative, the line and the object don't intersect
+    if(discriminant < 0 || isNaN(discriminant)) return null;
+    var t1 = (-b - Math.sqrt(discriminant))/a;
+    var t2 = (-b + Math.sqrt(discriminant))/a;
+
+    if(RayDebug){
+	console.log("t1" + t1);
+	console.log("t2" + t2);
+	console.log("discriminant" + discriminant);
+    }
+    
+    if(t1 < 0 && t2 < 0||isNaN(t1) && isNaN(t2))return null;
+    else if(t1 < 0 && t2 >= 0|| isNaN(t1) && t2 >= 0) return new Intersection(t2);
+    else if(t1 >= 0 && t2 < 0 || isNaN(t2) && t1 >= 0) return new Intersection(t1);
+    else{
+	if(t1 > t2) return new Intersection(t2);
+	else return new Intersection(t1);
+    }
+
+    
+    
+};
 //Sphere.prototype.<method> = function(params){};
-var Triangle = function(){};
+var Triangle = function(p1, p2, p3){
+    this.v1 = p1;
+    this.v2 = p2;
+    this.v3 = p3;
+};
 var Material = function(){};
 var AmbientLight = function(){};
 var PointLight = function(){};
@@ -48,7 +103,11 @@ var Ray = function(direction, origin){
     this.direction = direction;
     this.origin = origin;
 };//might not need
-var Intersection = function(){};//might not need
+var Intersection = function(t, intersectionPoint, normal){
+    this.t = t;
+    this.intersectionPoint = intersectionPoint;
+    this.normal = normal;
+};//might not need
 
 //initializes the canvas and drawing buffers
 function init() {
@@ -57,6 +116,7 @@ function init() {
   imageBuffer = context.createImageData(canvas.width, canvas.height); //buffer for pixels
 
   loadSceneFile("assets/SphereTest.json");
+//loadSceneFile("assets/TriangleTest.json");
 
 
 }
@@ -72,11 +132,59 @@ function loadSceneFile(filepath) {
     if(DEBUG){
 	console.log("scene object: " + scene);
 	console.log(camera);
+
+	var width = 512;
+	var height = 512;
+
+	var ray = camera.castRay(0,0);
+	//=> o: 0,0,0; d: -0.41421356237309503,0.41421356237309503,-1 raytracer.js:115
+	console.log(ray);
+
+	ray = camera.castRay(width, height);
+	//=> o: 0,0,0; d: 0.4158347504841443,-0.4158347504841443,-1 raytracer.js:117
+	console.log(ray);
+	
+	ray = camera.castRay(0, height);
+	//=> o: 0,0,0; d: -0.41421356237309503,-0.4158347504841443,-1 raytracer.js:119
+	console.log(ray);
+	
+	ray = camera.castRay(width,0);
+	console.log(ray);
+	//=> o: 0,0,0; d: 0.4158347504841443,0.41421356237309503,-1 raytracer.js:121
+	ray = camera.castRay(width/2,height/2);
+	//=> o: 0,0,0; d: 0.0008105940555246383,-0.0008105940555246383,-1 
+	console.log(ray);
+    }
+
+    //set up array to hold our surfaces
+    surfaces = [];
+    console.log(scene.surfaces);
+
+
+    for(var i = 0; i < scene.surfaces.length; i++){
+	surfaces.push(getSurfaceShape(scene.surfaces[i]));
     }
   //TODO - set up surfaces
-
+    if(DEBUG) console.log(surfaces);
 
   render(); //render the scene
+
+}
+
+/*
+
+  Returns an appropriate shape given the surface object
+
+  TODO: will probably need to add more parameters.
+*/
+function getSurfaceShape(surface){
+   
+    if(surface.shape === "Sphere"){
+	return new Sphere(surface.center, surface.radius, surface.material);
+    }
+    else{
+	return new Triangle();
+    }
 
 }
 
@@ -85,7 +193,31 @@ function loadSceneFile(filepath) {
 function render() {
   var start = Date.now(); //for logging
 
+    if(DEBUG){
+//	console.log(imageBuffer.data.length);
+    }
 
+    var curRay;
+    var curIntersection;
+    var curColor;
+    for(var x = 0; x < canvas.width; x++){
+	for(var y = 0; y < canvas.height; y++){
+	    curRay = camera.castRay(x, y);
+
+	    //note: going to have to determine closest intersection but thats later
+	    for(var i = 0; i < surfaces.length; i++){
+		curIntersection = surfaces[i].intersects(curRay);
+	    }
+	    if(curIntersection === null) setPixel(x, y, [0,0,0]);
+	    else {
+		setPixel(x, y, [1,1,1]);
+	//	console.log("curintersection is not null");
+	    }
+	    //see if curRay intersects any objects
+	    //if it intersects more than one get the closest
+	    //otherwise, set it to white
+	}
+    }
   //TODO - fire a ray though each pixel
 
   //TODO - calculate the intersection of that ray with the scene
