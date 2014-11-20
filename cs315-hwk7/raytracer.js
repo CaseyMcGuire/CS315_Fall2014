@@ -3,7 +3,7 @@ var canvas;
 var context;
 var imageBuffer;
 
-var DEBUG = false; //whether to show debug messages
+var DEBUG = true; //whether to show debug messages
 var EPSILON = 0.00001; //error margins
 
 //scene to render
@@ -12,6 +12,43 @@ var camera;
 var surfaces;
 //etc...
 
+//define our objects (may not need some of these...)
+/*
+  Camera class tracks location and facing of the camera, and may be responsible
+  for generating viewing rays. It can store variables to quickly generate new rays
+  without having to recompute appropriate vectors.
+*/
+var Camera = function(eye, up, at, fovy, aspect){
+    this.eye = eye;
+    this.up = up;
+    this.at = at;
+    this.fovy = fovy;
+    this.aspect = aspect;
+
+
+    var h = 2*Math.tan(rad(fovy/2.0));
+    this.h = h;
+    var w = h*aspect;
+    this.w = w;
+};
+Camera.prototype.castRay = function(x, y){
+    var u = (w * x/(canvas.width - 1)) - (w/2.0);
+    var v = (-h * y/(canvas.height - 1)) + (h/2.0);
+   // var direction = u*up + v*
+};
+
+var Sphere = function(){};
+//Sphere.prototype.<method> = function(params){};
+var Triangle = function(){};
+var Material = function(){};
+var AmbientLight = function(){};
+var PointLight = function(){};
+var DirectionalLight = function(){};
+var Ray = function(direction, origin){
+    this.direction = direction;
+    this.origin = origin;
+};//might not need
+var Intersection = function(){};//might not need
 
 //initializes the canvas and drawing buffers
 function init() {
@@ -30,7 +67,12 @@ function loadSceneFile(filepath) {
   scene = Utils.loadJSON(filepath); //load the scene
 
   //TODO - set up camera
+    camera = new Camera(scene.camera.eye, scene.camera.up, scene.camera.at, scene.camera.fovy, scene.camera.aspect);
 
+    if(DEBUG){
+	console.log("scene object: " + scene);
+	console.log(camera);
+    }
   //TODO - set up surfaces
 
 
