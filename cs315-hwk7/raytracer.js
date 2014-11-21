@@ -10,6 +10,8 @@ var EPSILON = 0.00001; //error margins
 var scene;
 var camera;
 var surfaces;
+var materials;
+var lights;
 //etc...
 
 //define our objects (may not need some of these...)
@@ -77,17 +79,24 @@ Sphere.prototype.intersects = function(ray){
 	console.log("t2" + t2);
 	console.log("discriminant" + discriminant);
     }
-    
+
+    var t;    
+
     if(t1 < 0 && t2 < 0||isNaN(t1) && isNaN(t2))return null;
-    else if(t1 < 0 && t2 >= 0|| isNaN(t1) && t2 >= 0) return new Intersection(t2);
-    else if(t1 >= 0 && t2 < 0 || isNaN(t2) && t1 >= 0) return new Intersection(t1);
+    else if(t1 < 0 && t2 >= 0|| isNaN(t1) && t2 >= 0) t = t2;
+    else if(t1 >= 0 && t2 < 0 || isNaN(t2) && t1 >= 0) t = t1;
     else{
-	if(t1 > t2) return new Intersection(t2);
-	else return new Intersection(t1);
+	if(t1 > t2) t = t2;
+	else t = t1;
     }
 
     
+
+    var point = vec3.scaleAndAdd([0,0,0], ray.origin, ray.direction, t);
+    var normal = vec3.subtract([0, 0, 0], point, this.center);
+    var unitNormal = vec3.scale([0,0,0], normal, 1/this.radius);
     
+    return new Intersection(t, point, unitNormal);
 };
 //Sphere.prototype.<method> = function(params){};
 var Triangle = function(p1, p2, p3){
@@ -144,14 +153,29 @@ Triangle.prototype.intersects = function(ray){
 	return new Intersection(t);
     }
 
-    //no hit
+    //no hit :(
     return null;
 
 };
-var Material = function(){};
-var AmbientLight = function(){};
-var PointLight = function(){};
-var DirectionalLight = function(){};
+var Material = function(ka, kd, ks, shininess, kr){
+    this.ka = ka;
+    this.kd = kd;
+    this.ks = ks;
+    this.shininess = shininess;
+    this.kr = kr;
+};
+//ambient light only has color
+var AmbientLight = function(color){
+    this.color = color;
+};
+var PointLight = function(position, color){
+    this.position = position;
+    this.color = color;
+};
+var DirectionalLight = function(direction, color){
+    this.direction = direction;
+    this.color = color;
+};
 var Ray = function(direction, origin){
     this.direction = direction;
     this.origin = origin;
@@ -168,8 +192,8 @@ function init() {
   context = canvas.getContext("2d");
   imageBuffer = context.createImageData(canvas.width, canvas.height); //buffer for pixels
 
- // loadSceneFile("assets/SphereTest.json");
-loadSceneFile("assets/TriangleTest.json");
+  loadSceneFile("assets/SphereTest.json");
+//loadSceneFile("assets/TriangleTest.json");
 
 
 }
@@ -213,12 +237,28 @@ function loadSceneFile(filepath) {
     surfaces = [];
     console.log(scene.surfaces);
 
-
     for(var i = 0; i < scene.surfaces.length; i++){
 	surfaces.push(getSurfaceShape(scene.surfaces[i]));
     }
   //TODO - set up surfaces
     if(DEBUG) console.log(surfaces);
+
+    //set up our materials
+    materials = [];
+    for(var i = 0; i < scene.materials.length; i++){
+	materials.push(new Material(
+	    scene.materials[i].ka,
+	    scene.materials[i].kd,
+	    scene.materials[i].ks,
+	    scene.materials[i].shininess,
+	    scene.materials[i].kr));
+    }
+
+    //set up our lights
+    lights = {};
+    for(var i = 0; i < scene.lights.length; i++){
+	lights[scene.lights[i].source] = getLightType(scene.lights[i]);
+    }
 
   render(); //render the scene
 
@@ -236,10 +276,22 @@ function getSurfaceShape(surface){
 	return new Sphere(surface.center, surface.radius, surface.material);
     }
     else{
-	return new Triangle(surface.p1,surface.p2,surface.p3);
+	return new Triangle(surface.p1, surface.p2, surface.p3);
     }
-
 }
+
+function getLightType(light){
+    if(light.source === "Ambient"){
+	return new AmbientLight(light.color);
+    }
+    else if(light.source === "Point"){
+	return new PointLight(position, color);
+    }
+    else{
+	return new DirectionalLight(light.direction, light.color);
+    }
+}
+
 
 
 //renders the scene
