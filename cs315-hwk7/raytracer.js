@@ -192,10 +192,10 @@ function init() {
   context = canvas.getContext("2d");
   imageBuffer = context.createImageData(canvas.width, canvas.height); //buffer for pixels
 
-  loadSceneFile("assets/SphereTest.json");
+ // loadSceneFile("assets/SphereTest.json");
 //loadSceneFile("assets/TriangleTest.json");
-
-
+  //  loadSceneFile("assets/SphereShadingTest2.json");
+    loadSceneFile("assets/SphereShadingTest1.json");
 }
 
 
@@ -261,7 +261,7 @@ function loadSceneFile(filepath) {
     }
 
   render(); //render the scene
-
+    console.log(lights);
 }
 
 /*
@@ -285,11 +285,95 @@ function getLightType(light){
 	return new AmbientLight(light.color);
     }
     else if(light.source === "Point"){
-	return new PointLight(position, color);
+	return new PointLight(light.position, light.color);
     }
     else{
 	return new DirectionalLight(light.direction, light.color);
     }
+}
+
+function clamp(num, min, max){
+    if(num < min){
+	x = min;
+    }
+    else if(x > max){
+	x = max;
+    }
+    return x;
+}
+
+function getColor(intersection, surface){
+    var light;
+    var lightPos;
+  //  console.log(lights);
+    if(lights.Point !== undefined){
+	light = lights.Point;
+	lightPos = light.position;
+    }
+    else if(lights.Directional !== undefined){
+	light = lights.Directional;
+	lightPos = light.direction;
+    }
+    else{
+	return [0, 0, 0];
+    }
+  
+    var lightDirection = vec3.subtract([0, 0, 0], lightPos, intersection.intersectionPoint);
+   // console.log(lightDirection);
+    vec3.normalize(lightDirection, lightDirection);
+
+    var negativeLightDirection = vec3.subtract([0,0,0], [0,0,0], lightDirection);
+ 
+    var reflection = vec3.normalize([0,0,0], getReflection(negativeLightDirection, intersection.normal));
+
+
+    
+  
+   // console.log(reflection);
+
+    var ka = vec3.clone(materials[surface.material].ka);
+    vec3.multiply(ka, ka, lights.Ambient.color);
+    //console.log(light);
+   // console.log(ka);
+    
+    var kd = vec3.clone(materials[surface.material].kd);
+    vec3.multiply(kd, kd, light.color);
+//console.log(kd);
+    var diffuse = Math.max(0, vec3.dot(intersection.normal, lightDirection));
+
+    //console.log(diffuse);
+    vec3.scale(kd, kd, diffuse);
+
+    var ks = vec3.clone(materials[surface.material].ks);
+    var v = vec3.subtract([0,0,0], camera.eye, intersection.intersectionPoint);
+   
+    
+   // console.log(v);
+    var h = vec3.add([0,0,0], v, lightDirection);
+   // console.log(h);
+    vec3.normalize(h, h);
+
+    var coefficient = Math.max(0, vec3.dot(intersection.normal, h));
+   // console.log(coefficient);
+    coefficient = Math.pow(coefficient, materials[surface.material].shininess);
+    var specular = vec3.scale([0,0,0], ks, coefficient);
+
+    var color = vec3.add([0,0,0], ka, kd);
+    vec3.add(color, color, specular);
+
+ //   console.log(color);
+    return color;
+}
+
+/*
+  Returns a reflection vector given the light direction and 
+  surface normal
+ */
+function getReflection(lightDirection, normal){
+    var dotProduct = vec3.dot(lightDirection, normal);
+    dotProduct = dotProduct * 2;
+    var scaledNormal = vec3.scale([0,0,0], normal, dotProduct);
+    return vec3.subtract([0,0,0], lightDirection, scaledNormal);
 }
 
 
@@ -304,19 +388,30 @@ function render() {
 
     var curRay;
     var curIntersection;
+    var frontIntersection;
     var curColor;
+    var frontSurface;
+    
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
 	    curRay = camera.castRay(x, y);
-
+	   frontIntersection = null;
 	    //note: going to have to determine closest intersection but thats later
+	    
 	    for(var i = 0; i < surfaces.length; i++){
 		curIntersection = surfaces[i].intersects(curRay);
+		
+		if(frontIntersection === null || 
+		   curIntersection !== null && frontIntersection !== null && curIntersection.t < frontIntersection.t){
+		    frontIntersection = curIntersection;
+		    frontSurface = surfaces[i];
+		}
+
+		
 	    }
-	    if(curIntersection === null) setPixel(x, y, [0,0,0]);
+	    if(frontIntersection === null) setPixel(x, y, [0,0,0]);
 	    else {
-		setPixel(x, y, [1,1,1]);
-	//	console.log("curintersection is not null");
+		setPixel(x, y, getColor(frontIntersection, frontSurface));
 	    }
 	    //see if curRay intersects any objects
 	    //if it intersects more than one get the closest
