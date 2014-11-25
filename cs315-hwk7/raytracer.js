@@ -194,14 +194,15 @@ function init() {
 
  // loadSceneFile("assets/SphereTest.json");
 //loadSceneFile("assets/TriangleTest.json");
-  //  loadSceneFile("assets/SphereShadingTest2.json");
-    loadSceneFile("assets/SphereShadingTest1.json");
+   // loadSceneFile("assets/SphereShadingTest2.json");
+   loadSceneFile("assets/SphereShadingTest1.json");
 }
 
 
 //loads and "parses" the scene file at the given path
 function loadSceneFile(filepath) {
   scene = Utils.loadJSON(filepath); //load the scene
+    console.log("We're loading " + filepath);
 
   //TODO - set up camera
     camera = new Camera(scene.camera.eye, scene.camera.up, scene.camera.at, scene.camera.fovy, scene.camera.aspect);
@@ -305,25 +306,28 @@ function clamp(num, min, max){
 function getColor(intersection, surface){
     var light;
     var lightPos;
+    var lightDirection;
   //  console.log(lights);
     if(lights.Point !== undefined){
 	light = lights.Point;
 	lightPos = light.position;
+	lightDirection = vec3.subtract([0, 0, 0], lightPos, intersection.intersectionPoint);
     }
     else if(lights.Directional !== undefined){
 	light = lights.Directional;
-	lightPos = light.direction;
+	//lightPos = light.direction;
+	lightDirection = vec3.subtract([0,0,0], [0,0,0], light.direction);
     }
     else{
 	return [0, 0, 0];
     }
   
-    var lightDirection = vec3.subtract([0, 0, 0], lightPos, intersection.intersectionPoint);
+  //  lightDirection = vec3.subtract([0, 0, 0], lightPos, intersection.intersectionPoint);
    // console.log(lightDirection);
     vec3.normalize(lightDirection, lightDirection);
 
     var negativeLightDirection = vec3.subtract([0,0,0], [0,0,0], lightDirection);
- 
+   // var negativeLightDirection = lightDirection;
     var reflection = vec3.normalize([0,0,0], getReflection(negativeLightDirection, intersection.normal));
 
 
