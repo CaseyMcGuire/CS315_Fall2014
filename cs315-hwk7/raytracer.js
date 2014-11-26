@@ -151,23 +151,13 @@ Triangle.prototype.intersects = function(ray){
     
     //if we have an intersection
     if(t > EPSILON){
-	normal = vec3.cross([0,0,0], edge1, edge2);
-	/*
-	var inverse = 1/vec3.dot(P, edge1);
-	var beta = vec3.dot(P,T)*inverse;
-	var gamma = vec3.dot(Q, ray.direction)*inverse;
 
-	var vec1 = vec3.scale([0,0,0], edge1, beta);
-	var vec2 = vec3.scale([0,0,0], edge2, gamma);
-	
-	var point = vec3.add([0,0,0], vec1, vec2);
-	vec3.add(point, point, this.v1);
-	*/
+
 	//var point = vec3.scale([0,0,0], ray.direction, t);
 	//vec3.add(point, point, ray.origin);
 	var point = vec3.scaleAndAdd([0,0,0], ray.origin, ray.direction, t);
 	
-	var normal = vec3.cross([0,0,0], edge1, edge2);
+	var normal = vec3.cross([0,0,0], edge2, edge1);
 	vec3.normalize(normal, normal);
 
 	return new Intersection(t,point,normal);
@@ -215,9 +205,9 @@ function init() {
  // loadSceneFile("assets/SphereTest.json");
 //loadSceneFile("assets/TriangleTest.json");
   //  loadSceneFile("assets/SphereShadingTest2.json");
-  // loadSceneFile("assets/SphereShadingTest1.json");
-   loadSceneFile("assets/TriangleShadingTest.json");
-   // loadSceneFile("assets/TransformationTest.json");
+ // loadSceneFile("assets/SphereShadingTest1.json");
+  // loadSceneFile("assets/TriangleShadingTest.json");
+    loadSceneFile("assets/TransformationTest.json");
 }
 
 
@@ -322,7 +312,7 @@ function clamp(num, min, max){
     if(num < min){
 	x = min;
     }
-    else if(x > max){
+    else if(num > max){
 	x = max;
     }
     else{
@@ -331,6 +321,7 @@ function clamp(num, min, max){
     return x;
 }
 
+//this is the color algorithm from the Shirley reading
 function getColor(intersection, surface, ray){
     var light;
     var lightPos;
@@ -367,11 +358,6 @@ function getColor(intersection, surface, ray){
     //make the light direction unit length
     vec3.normalize(lightDirection, lightDirection);
     
-    //reverse light direction
- //   var negativeLightDirection = vec3.subtract([0,0,0], [0,0,0], lightDirection);
-
-  
-   // var reflection = vec3.normalize([0,0,0], getReflection(negativeLightDirection, intersection.normal));
 
     //get the ambient component of our light
     var ka = vec3.clone(materials[surface.material].ka);
@@ -407,11 +393,16 @@ function getColor(intersection, surface, ray){
 
     var color = vec3.add([0,0,0], ka, kd);
     vec3.add(color, color, specular);
+
+    for(var i = 0; i < color.length; i++){
+	color[i] = clamp(color[i], 0, 1);
+    }
     
 
     return color;
 }
 
+//this is the color algorithm in Joel's slides
 function getColor2(intersection, surface, ray){
     var light;
     var lightPos;
@@ -527,7 +518,7 @@ function render() {
 	    }
 	    if(frontIntersection === null) setPixel(x, y, [0,0,0]);
 	    else {
-		setPixel(x, y, getColor2(frontIntersection, frontSurface, curRay));
+		setPixel(x, y, getColor(frontIntersection, frontSurface, curRay));
 	    }
 	    //see if curRay intersects any objects
 	    //if it intersects more than one get the closest
@@ -580,8 +571,28 @@ $(document).ready(function(){
     var x = e.pageX - $('#canvas').offset().left;
     var y = e.pageY - $('#canvas').offset().top;
     DEBUG = true;
-    camera.castRay(x,y); //cast a ray through the point
-    DEBUG = false;
+      var frontIntersection = null;
+      var curIntersection;
+      var frontSurface;
+      var curRay =  camera.castRay(x,y); //cast a ray through the point
+      console.log(curRay);
+      for(var i = 0; i < surfaces.length; i++){
+	  curIntersection = surfaces[i].intersects(curRay);
+		
+	  if(frontIntersection === null || 
+	     curIntersection !== null && frontIntersection !== null && curIntersection.t < frontIntersection.t){
+		    frontIntersection = curIntersection;
+	      frontSurface = surfaces[i];
+	  }
+	  
+		
+      }
+      if(frontIntersection === null)console.log([0,0,0]); // setPixel(x, y, [0,0,0]);
+      else {
+	 // setPixel(x, y, getColor(frontIntersection, frontSurface, curRay));
+	  console.log(getColor(frontIntersection, frontSurface, curRay));
+      }
+      DEBUG = false;
   });
-
+    
 });

@@ -42,7 +42,7 @@
  * How can I make this assignment better?
  **********************************************************************/
 
-<Replace this with your response!>
+-I spend quite a bit of time trying to get my triangle to shade correctly.It tended to be show up very dark and I couldn't figure out why. It turns out that the unit normal was pointing the wrong way and if I took its negative it shaded correctly. It might be a good idea to warn students that if their colors aren't showing up correctly and their algorithm looks correct, they might try changing the direction of their normals.
 
 
 
