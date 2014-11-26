@@ -150,7 +150,21 @@ Triangle.prototype.intersects = function(ray){
     
     //if we have an intersection
     if(t > EPSILON){
-	return new Intersection(t);
+	normal = vec3.cross([0,0,0], edge1, edge2);
+
+	var inverse = 1/vec3.dot(P, edge1);
+	var beta = vec3.dot(P,T)*inverse;
+	var gamma = vec3.dot(Q, ray.direction)*inverse;
+
+	var vec1 = vec3.scale([0,0,0], edge1, beta);
+	var vec2 = vec3.scale([0,0,0], edge2, gamma);
+	
+	var point = vec3.add([0,0,0], vec1, vec2);
+	vec3.add(point, point, this.v1);
+
+	var normal = vec3.cross([0,0,0], edge1, edge2);
+
+	return new Intersection(t,point,normal);
     }
 
     //no hit :(
@@ -193,9 +207,9 @@ function init() {
   imageBuffer = context.createImageData(canvas.width, canvas.height); //buffer for pixels
 
  // loadSceneFile("assets/SphereTest.json");
-//loadSceneFile("assets/TriangleTest.json");
-   // loadSceneFile("assets/SphereShadingTest2.json");
-   loadSceneFile("assets/SphereShadingTest1.json");
+loadSceneFile("assets/TriangleTest.json");
+  //  loadSceneFile("assets/SphereShadingTest2.json");
+ //  loadSceneFile("assets/SphereShadingTest1.json");
 }
 
 
@@ -311,7 +325,13 @@ function getColor(intersection, surface, ray){
     var light;
     var lightPos;
     var lightDirection;
-    
+    var normal = vec3.clone(intersection.normal);
+    vec3.normalize(normal, normal);
+    var eyeDirection = vec3.clone(ray.direction);
+    vec3.normalize(eyeDirection, eyeDirection);
+    for(var i = 0; i < eyeDirection.length; i++){
+	eyeDirection[i] = -eyeDirection[i];
+    }
   
     //first, figure out the direction of the light based on whether its a directional
     //light or a point light
@@ -322,7 +342,6 @@ function getColor(intersection, surface, ray){
 	
     }
     else if(lights.Directional !== undefined){
-	
 	light = lights.Directional;
 	//lightDirection = vec3.clone(light.direction);
 	lightDirection = vec3.subtract([0,0,0], [0,0,0], light.direction);
@@ -334,13 +353,13 @@ function getColor(intersection, surface, ray){
     }
   
     //make the light direction unit length
-   // vec3.normalize(lightDirection, lightDirection);
-
+    vec3.normalize(lightDirection, lightDirection);
+    
     //reverse light direction
-    var negativeLightDirection = vec3.subtract([0,0,0], [0,0,0], lightDirection);
+ //   var negativeLightDirection = vec3.subtract([0,0,0], [0,0,0], lightDirection);
 
   
-    var reflection = vec3.normalize([0,0,0], getReflection(negativeLightDirection, intersection.normal));
+   // var reflection = vec3.normalize([0,0,0], getReflection(negativeLightDirection, intersection.normal));
 
     //get the ambient component of our light
     var ka = vec3.clone(materials[surface.material].ka);
@@ -351,23 +370,19 @@ function getColor(intersection, surface, ray){
     var kd = vec3.clone(materials[surface.material].kd);
     
     vec3.multiply(kd, kd, light.color);
-    var diffuse = Math.max(0, vec3.dot(intersection.normal, lightDirection));
+    var diffuse = Math.max(0, vec3.dot(normal, lightDirection));
     vec3.scale(kd, kd, diffuse);
 
     
     //get the specular component of our light
     var ks = vec3.clone(materials[surface.material].ks);
   
-    var v = vec3.clone(ray.direction);
-    for(var i = 0; i < v.length; i++){
-	v[i] = -v[i];
-    }
-   
-    var h = vec3.add([0,0,0], v, negativeLightDirection);
+
+    var h = vec3.add([0,0,0], eyeDirection, lightDirection);
    // console.log(h);
     vec3.normalize(h, h);
 
-    var normal = vec3.clone(intersection.normal);
+   // var normal = vec3.clone(intersection.normal);
     //vec3.normalize(normal, normal);
     var coefficient = Math.max(0, vec3.dot(normal, h));
    // var coefficient = Math.max(vec3.dot(reflection, v), 0);
@@ -415,11 +430,13 @@ function getColor2(intersection, surface, ray){
 	return [0, 0, 0];
     }
 
-   // vec3.normalize(lightDirection, lightDirection);
+    vec3.normalize(lightDirection, lightDirection);
+   var negativeLightDirection = vec3.subtract([0,0,0], [0,0,0], lightDirection);
    
 
     var reflection = vec3.normalize([0,0,0], getReflection(lightDirection, normal));
-    vec3.subtract(lightDirection, [0,0,0], lightDirection);
+    vec3.normalize(reflection, reflection);
+   // vec3.subtract(lightDirection, [0,0,0], lightDirection);
     //get the ambient component of our light
     var ka = vec3.clone(materials[surface.material].ka);
     vec3.multiply(ka, ka, lights.Ambient.color);
@@ -428,7 +445,7 @@ function getColor2(intersection, surface, ray){
     var kd = vec3.clone(materials[surface.material].kd);
     
    // vec3.multiply(kd, kd, light.color);
-    var diffuse = Math.max(0, vec3.dot(normal, lightDirection));
+    var diffuse = Math.max(0, vec3.dot(normal, negativeLightDirection));
     vec3.scale(kd, kd, diffuse);
 
     
@@ -438,6 +455,7 @@ function getColor2(intersection, surface, ray){
     for(var i = 0; i < v.length; i++){
 	v[i] = -v[i];
     }
+    vec3.normalize(v,v);
     
     var coefficient = Math.max(0, vec3.dot(reflection, v));
     coefficient = Math.pow(coefficient, materials[surface.material].shininess);
@@ -498,7 +516,7 @@ function render() {
 	    }
 	    if(frontIntersection === null) setPixel(x, y, [0,0,0]);
 	    else {
-		setPixel(x, y, getColor(frontIntersection, frontSurface, curRay));
+		setPixel(x, y, getColor2(frontIntersection, frontSurface, curRay));
 	    }
 	    //see if curRay intersects any objects
 	    //if it intersects more than one get the closest
