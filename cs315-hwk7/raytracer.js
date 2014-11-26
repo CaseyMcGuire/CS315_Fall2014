@@ -99,10 +99,11 @@ Sphere.prototype.intersects = function(ray){
     return new Intersection(t, point, unitNormal);
 };
 //Sphere.prototype.<method> = function(params){};
-var Triangle = function(p1, p2, p3){
+var Triangle = function(p1, p2, p3, material){
     this.v1 = p1;
     this.v2 = p2;
     this.v3 = p3;
+    this.material = material;
 };
 Triangle.prototype.intersects = function(ray){
 
@@ -151,7 +152,7 @@ Triangle.prototype.intersects = function(ray){
     //if we have an intersection
     if(t > EPSILON){
 	normal = vec3.cross([0,0,0], edge1, edge2);
-
+	/*
 	var inverse = 1/vec3.dot(P, edge1);
 	var beta = vec3.dot(P,T)*inverse;
 	var gamma = vec3.dot(Q, ray.direction)*inverse;
@@ -161,8 +162,13 @@ Triangle.prototype.intersects = function(ray){
 	
 	var point = vec3.add([0,0,0], vec1, vec2);
 	vec3.add(point, point, this.v1);
-
+	*/
+	//var point = vec3.scale([0,0,0], ray.direction, t);
+	//vec3.add(point, point, ray.origin);
+	var point = vec3.scaleAndAdd([0,0,0], ray.origin, ray.direction, t);
+	
 	var normal = vec3.cross([0,0,0], edge1, edge2);
+	vec3.normalize(normal, normal);
 
 	return new Intersection(t,point,normal);
     }
@@ -207,9 +213,11 @@ function init() {
   imageBuffer = context.createImageData(canvas.width, canvas.height); //buffer for pixels
 
  // loadSceneFile("assets/SphereTest.json");
-loadSceneFile("assets/TriangleTest.json");
+//loadSceneFile("assets/TriangleTest.json");
   //  loadSceneFile("assets/SphereShadingTest2.json");
- //  loadSceneFile("assets/SphereShadingTest1.json");
+  // loadSceneFile("assets/SphereShadingTest1.json");
+   loadSceneFile("assets/TriangleShadingTest.json");
+   // loadSceneFile("assets/TransformationTest.json");
 }
 
 
@@ -268,6 +276,7 @@ function loadSceneFile(filepath) {
 	    scene.materials[i].shininess,
 	    scene.materials[i].kr));
     }
+    console.log("materials " + materials);
 
     //set up our lights
     lights = {};
@@ -291,11 +300,12 @@ function getSurfaceShape(surface){
 	return new Sphere(surface.center, surface.radius, surface.material);
     }
     else{
-	return new Triangle(surface.p1, surface.p2, surface.p3);
+	return new Triangle(surface.p1, surface.p2, surface.p3, surface.material);
     }
 }
 
 function getLightType(light){
+
     if(light.source === "Ambient"){
 	return new AmbientLight(light.color);
     }
@@ -327,11 +337,13 @@ function getColor(intersection, surface, ray){
     var lightDirection;
     var normal = vec3.clone(intersection.normal);
     vec3.normalize(normal, normal);
+
     var eyeDirection = vec3.clone(ray.direction);
     vec3.normalize(eyeDirection, eyeDirection);
     for(var i = 0; i < eyeDirection.length; i++){
 	eyeDirection[i] = -eyeDirection[i];
     }
+
   
     //first, figure out the direction of the light based on whether its a directional
     //light or a point light
@@ -383,16 +395,14 @@ function getColor(intersection, surface, ray){
     vec3.normalize(h, h);
 
    // var normal = vec3.clone(intersection.normal);
-    //vec3.normalize(normal, normal);
+   // vec3.normalize(normal, normal);
     var coefficient = Math.max(0, vec3.dot(normal, h));
    // var coefficient = Math.max(vec3.dot(reflection, v), 0);
    // console.log(coefficient);
     coefficient = Math.pow(coefficient, materials[surface.material].shininess);
     var specular = vec3.scale([0,0,0], ks, coefficient);
 
-    
-
-    
+        
     vec3.multiply(specular, specular, light.color);
 
     var color = vec3.add([0,0,0], ka, kd);
@@ -438,6 +448,7 @@ function getColor2(intersection, surface, ray){
     vec3.normalize(reflection, reflection);
    // vec3.subtract(lightDirection, [0,0,0], lightDirection);
     //get the ambient component of our light
+ 
     var ka = vec3.clone(materials[surface.material].ka);
     vec3.multiply(ka, ka, lights.Ambient.color);
    // vec3.normalize(ka, ka);
@@ -500,7 +511,7 @@ function render() {
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
 	    curRay = camera.castRay(x, y);
-	   frontIntersection = null;
+	    frontIntersection = null;
 	    //note: going to have to determine closest intersection but thats later
 	    
 	    for(var i = 0; i < surfaces.length; i++){
@@ -511,7 +522,7 @@ function render() {
 		    frontIntersection = curIntersection;
 		    frontSurface = surfaces[i];
 		}
-
+		
 		
 	    }
 	    if(frontIntersection === null) setPixel(x, y, [0,0,0]);
@@ -523,17 +534,11 @@ function render() {
 	    //otherwise, set it to white
 	}
     }
-  //TODO - fire a ray though each pixel
-
-  //TODO - calculate the intersection of that ray with the scene
-
-  //TODO - set the pixel to be the color of that intersection (using setPixel() method)
-
-
-  //render the pixels that have been set
+  
+    //render the pixels that have been set
   context.putImageData(imageBuffer,0,0);
-
-  var end = Date.now(); //for logging
+    
+    var end = Date.now(); //for logging
   $('#log').html("rendered in: "+(end-start)+"ms");
   console.log("rendered in: "+(end-start)+"ms");
 
