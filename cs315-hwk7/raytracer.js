@@ -3,7 +3,7 @@ var canvas;
 var context;
 var imageBuffer;
 
-var DEBUG = true; //whether to show debug messages
+var DEBUG = false; //whether to show debug messages
 var EPSILON = 0.00001; //error margins
 
 //scene to render
@@ -73,7 +73,7 @@ Sphere.prototype.intersects = function(ray){
     var a = vec3.dot(ray.direction, ray.direction);//d dot d
     var b = vec3.dot(ray.direction, vec3.subtract([0,0,0], ray.origin, this.center));//2d dot (e - c)
     var c = vec3.dot(vec3.subtract([0,0,0], ray.origin, this.center),vec3.subtract([0,0,0], ray.origin, this.center));
- var discriminant = Math.pow(b, 2) - a * (c - Math.pow(this.radius, 2));
+    var discriminant = Math.pow(b, 2) - a * (c - Math.pow(this.radius, 2));
     
     if(RayDebug){
 	console.log("a" + a);
@@ -126,10 +126,10 @@ var Triangle = function(p1, p2, p3, material, transforms){
 	}
     }
 
-    console.log("Transform Object");
+    console.log("Triangle Transform Object");
     console.log(transformObject);
     this.transforms = transformObject;
-
+    console.log(this);
   
 };
 Triangle.prototype.intersects = function(ray){
@@ -234,7 +234,9 @@ function init() {
   //  loadSceneFile("assets/SphereShadingTest2.json");
  // loadSceneFile("assets/SphereShadingTest1.json");
   // loadSceneFile("assets/TriangleShadingTest.json");
-    loadSceneFile("assets/TransformationTest.json");
+   // loadSceneFile("assets/TransformationTest.json");
+    loadSceneFile("assets/FullTest.json");
+  //  loadSceneFile("assets/FullTest2.json");
 }
 
 
@@ -246,41 +248,15 @@ function loadSceneFile(filepath) {
   //TODO - set up camera
     camera = new Camera(scene.camera.eye, scene.camera.up, scene.camera.at, scene.camera.fovy, scene.camera.aspect);
 
-    if(DEBUG){
-	console.log("scene object: " + scene);
-	console.log(camera);
-
-	var width = 512;
-	var height = 512;
-
-	var ray = camera.castRay(0,0);
-	//=> o: 0,0,0; d: -0.41421356237309503,0.41421356237309503,-1 raytracer.js:115
-	console.log(ray);
-
-	ray = camera.castRay(width, height);
-	//=> o: 0,0,0; d: 0.4158347504841443,-0.4158347504841443,-1 raytracer.js:117
-	console.log(ray);
-	
-	ray = camera.castRay(0, height);
-	//=> o: 0,0,0; d: -0.41421356237309503,-0.4158347504841443,-1 raytracer.js:119
-	console.log(ray);
-	
-	ray = camera.castRay(width,0);
-	console.log(ray);
-	//=> o: 0,0,0; d: 0.4158347504841443,0.41421356237309503,-1 raytracer.js:121
-	ray = camera.castRay(width/2,height/2);
-	//=> o: 0,0,0; d: 0.0008105940555246383,-0.0008105940555246383,-1 
-	console.log(ray);
-    }
-
+    
     //set up array to hold our surfaces
     surfaces = [];
-    console.log(scene.surfaces);
+    
 
     for(var i = 0; i < scene.surfaces.length; i++){
 	surfaces.push(getSurfaceShape(scene.surfaces[i]));
     }
-  //TODO - set up surfaces
+ 
     if(DEBUG) console.log(surfaces);
 
     //set up our materials
@@ -301,7 +277,7 @@ function loadSceneFile(filepath) {
 	lights[scene.lights[i].source] = getLightType(scene.lights[i]);
     }
 
-  render(); //render the scene
+    render(); //render the scene
     console.log(lights);
 }
 
@@ -473,7 +449,7 @@ function getColor2(intersection, surface, ray){
 
     var kd = vec3.clone(materials[surface.material].kd);
     
-   // vec3.multiply(kd, kd, light.color);
+    vec3.multiply(kd, kd, light.color);
     var diffuse = Math.max(0, vec3.dot(normal, negativeLightDirection));
     vec3.scale(kd, kd, diffuse);
 
@@ -520,11 +496,13 @@ function getTransformationMatrix(surface){
 	mat4.translate(matrix, matrix, surface.transforms.Translate);
     }
     if(surface.transforms.Rotate !== undefined){	
+	if(DEBUG)console.log("We've got a problem");
 	mat4.rotateX(matrix, matrix, surface.transforms.Rotate[0]);
 	mat4.rotateY(matrix, matrix, surface.transforms.Rotate[1]);
 	mat4.rotateZ(matrix, matrix, surface.transforms.Rotate[2]);
     }
     if(surface.transforms.Scale !== undefined){
+	if(DEBUG) console.log("We've got a problem");
 	mat4.scale(matrix, matrix, surface.transforms.Scale);
     }
   
@@ -560,7 +538,8 @@ function render() {
 		 transformationMatrix = undefined;
 		// console.log(surfaces[i].transforms !== undefined);
 		if(surfaces[i].transforms !== undefined){
-		    //console.log("hello");
+		    
+		  
 		   var transformationMatrix = getTransformationMatrix(surfaces[i]);
 		    
 		    var invertedTransformationMatrix = mat4.create();
@@ -578,6 +557,7 @@ function render() {
 		    frontIntersection = curIntersection;
 		    frontSurface = surfaces[i];
 		    frontTransformationMatrix = transformationMatrix;
+		   
 		}
 		
 		
@@ -599,6 +579,7 @@ function render() {
 		    
 		    var tempNormal = frontIntersection.normal;
 		    frontIntersection.normal = vec4.fromValues(tempNormal[0], tempNormal[1], tempNormal[2], 0);
+		   // vec4.transformMat4(frontIntersection.normal, frontIntersection.normal, temp);
 		    vec4.transformMat4(frontIntersection.normal, frontIntersection.normal, temp);
 		}
 
@@ -707,6 +688,7 @@ $(document).ready(function(){
 	  
 	  if(frontIntersection === null || 
 	     curIntersection !== null && frontIntersection !== null && curIntersection.t < frontIntersection.t){
+
 	      frontIntersection = curIntersection;
 	      frontSurface = surfaces[i];
 	      frontTransformationMatrix = transformationMatrix;
@@ -714,7 +696,10 @@ $(document).ready(function(){
 	  
 		
       }
-      if(frontIntersection === null)console.log([0,0,0]); // setPixel(x, y, [0,0,0]);
+      if(frontIntersection === null){
+	  console.log("front intersection is null");
+	  console.log([0,0,0]); // setPixel(x, y, [0,0,0]);
+      }
       else {
 	 // setPixel(x, y, getColor(frontIntersection, frontSurface, curRay));
 
