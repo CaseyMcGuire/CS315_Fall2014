@@ -517,8 +517,7 @@ function getTransformationMatrix(surface){
     var matrix = mat4.create();
   
     if(surface.transforms.Translate !== undefined){
-
-	 mat4.translate(matrix, matrix, surface.transforms.Translate);
+	mat4.translate(matrix, matrix, surface.transforms.Translate);
     }
     if(surface.transforms.Rotate !== undefined){	
 	mat4.rotateX(matrix, matrix, surface.transforms.Rotate[0]);
@@ -547,6 +546,7 @@ function render() {
     var frontIntersection;
     var curColor;
     var frontSurface;
+    var frontTransformationMatrix;
     
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
@@ -557,12 +557,12 @@ function render() {
 	    for(var i = 0; i < surfaces.length; i++){
 		//check if the current surface has any transforms
 
-		var transformationMatrix;
-	 // console.log(surfaces[i].transforms !== undefined);
+		 transformationMatrix = undefined;
+		// console.log(surfaces[i].transforms !== undefined);
 		if(surfaces[i].transforms !== undefined){
 		    //console.log("hello");
-		    transformationMatrix = getTransformationMatrix(surfaces[i]);
-		   
+		   var transformationMatrix = getTransformationMatrix(surfaces[i]);
+		    
 		    var invertedTransformationMatrix = mat4.create();
 		    mat4.invert(invertedTransformationMatrix, transformationMatrix);
 		    curRay.origin = vec4.fromValues(curRay.origin[0], curRay.origin[1], curRay.origin[2], 1);
@@ -577,13 +577,33 @@ function render() {
 		   curIntersection !== null && frontIntersection !== null && curIntersection.t < frontIntersection.t){
 		    frontIntersection = curIntersection;
 		    frontSurface = surfaces[i];
+		    frontTransformationMatrix = transformationMatrix;
 		}
 		
 		
 	    }
 	    if(frontIntersection === null) setPixel(x, y, [0,0,0]);
 	    else {
-		setPixel(x, y, getColor(frontIntersection, frontSurface, curRay));
+
+		//if this object was transformed, need to translate back into world coordinates
+		if(frontTransformationMatrix !== undefined){
+		    //transform our intersection back into world coordinates
+		    var temp = frontIntersection.intersectionPoint;
+		    frontIntersection.intersectionPoint = vec4.fromValues(temp[0], temp[1], temp[2], 1);
+		    vec4.transformMat4(frontIntersection.intersectionPoint, frontIntersection.intersectionPoint, frontTransformationMatrix);
+		    
+		    //transform our normal back into world coordinates
+		    temp = mat4.create();
+		    mat4.invert(temp, frontTransformationMatrix);
+		    mat4.transpose(temp, temp);
+		    
+		    var tempNormal = frontIntersection.normal;
+		    frontIntersection.normal = vec4.fromValues(tempNormal[0], tempNormal[1], tempNormal[2], 0);
+		    vec4.transformMat4(frontIntersection.normal, frontIntersection.normal, temp);
+		}
+
+		
+		setPixel(x, y, getColor2(frontIntersection, frontSurface, curRay));
 	    }
 	    //see if curRay intersects any objects
 	    //if it intersects more than one get the closest
@@ -639,6 +659,7 @@ $(document).ready(function(){
       var frontIntersection = null;
       var curIntersection;
       var frontSurface;
+      var frontTransformationMatrix;
       var curRay =  camera.castRay(x,y); //cast a ray through the point
       console.log(curRay);
       for(var i = 0; i < surfaces.length; i++){
@@ -686,8 +707,9 @@ $(document).ready(function(){
 	  
 	  if(frontIntersection === null || 
 	     curIntersection !== null && frontIntersection !== null && curIntersection.t < frontIntersection.t){
-		    frontIntersection = curIntersection;
+	      frontIntersection = curIntersection;
 	      frontSurface = surfaces[i];
+	      frontTransformationMatrix = transformationMatrix;
 	  }
 	  
 		
@@ -695,6 +717,14 @@ $(document).ready(function(){
       if(frontIntersection === null)console.log([0,0,0]); // setPixel(x, y, [0,0,0]);
       else {
 	 // setPixel(x, y, getColor(frontIntersection, frontSurface, curRay));
+
+	  if(frontTransformationMatrix !== undefined){
+	      console.log("front transformation matrix is ");
+	      console.log(frontTransformationMatrix);
+	      console.log("intersection point is ");
+	      console.log(frontIntersection.intersectionPoint);
+	  }
+	  
 	  console.log(getColor(frontIntersection, frontSurface, curRay));
       }
       DEBUG = false;
