@@ -75,12 +75,7 @@ Sphere.prototype.intersects = function(ray){
     var c = vec3.dot(vec3.subtract([0,0,0], ray.origin, this.center),vec3.subtract([0,0,0], ray.origin, this.center));
     var discriminant = Math.pow(b, 2) - a * (c - Math.pow(this.radius, 2));
     
-    if(RayDebug){
-	console.log("a" + a);
-	console.log("b" + b);
-	console.log("c" + c);
-	console.log("discrimant" + discriminant);
-    }
+    
  
     //if the discriminant is negative, the line and the object don't intersect
     if(discriminant < 0 || isNaN(discriminant)) return null;
@@ -187,7 +182,7 @@ Triangle.prototype.intersects = function(ray){
 	var normal = vec3.cross([0,0,0], edge2, edge1);
 	vec3.normalize(normal, normal);
 
-	return new Intersection(t,point,normal);
+	return new Intersection(t, point, normal);
     }
 
     //no hit :(
@@ -218,9 +213,9 @@ var Ray = function(direction, origin){
     this.origin = origin;
 };//might not need
 var Intersection = function(t, intersectionPoint, normal){
-    this.t = t;
-    this.intersectionPoint = intersectionPoint;
-    this.normal = normal;
+    this.t = vec3.clone(t);
+    this.intersectionPoint = vec3.clone(intersectionPoint);
+    this.normal = vec3.clone(normal);
 };//might not need
 
 //initializes the canvas and drawing buffers
@@ -234,9 +229,12 @@ function init() {
   //  loadSceneFile("assets/SphereShadingTest2.json");
  // loadSceneFile("assets/SphereShadingTest1.json");
   // loadSceneFile("assets/TriangleShadingTest.json");
-   // loadSceneFile("assets/TransformationTest.json");
+ //   loadSceneFile("assets/TransformationTest.json");
     loadSceneFile("assets/FullTest.json");
-  //  loadSceneFile("assets/FullTest2.json");
+   // loadSceneFile("assets/FullTest2.json");
+ //   loadSceneFile("assets/ShadowTest1.json");
+  //  loadSceneFile("assets/RecursiveTest.json");
+  //  loadSceneFile("assets/2RecursiveTest.json");
 }
 
 
@@ -496,13 +494,13 @@ function getTransformationMatrix(surface){
 	mat4.translate(matrix, matrix, surface.transforms.Translate);
     }
     if(surface.transforms.Rotate !== undefined){	
-	if(DEBUG)console.log("We've got a problem");
+	
 	mat4.rotateX(matrix, matrix, surface.transforms.Rotate[0]);
 	mat4.rotateY(matrix, matrix, surface.transforms.Rotate[1]);
 	mat4.rotateZ(matrix, matrix, surface.transforms.Rotate[2]);
     }
     if(surface.transforms.Scale !== undefined){
-	if(DEBUG) console.log("We've got a problem");
+	
 	mat4.scale(matrix, matrix, surface.transforms.Scale);
     }
   
@@ -515,48 +513,68 @@ function getTransformationMatrix(surface){
 function render() {
   var start = Date.now(); //for logging
 
-    if(DEBUG){
-//	console.log(imageBuffer.data.length);
-    }
+ 
 
     var curRay;
     var curIntersection;
     var frontIntersection;
-    var curColor;
+   // var curColor;
     var frontSurface;
     var frontTransformationMatrix;
+    var transformationMatrix;
+    var origin;
+    var direction;
     
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
 	    curRay = camera.castRay(x, y);
 	    frontIntersection = null;
-	    //note: going to have to determine closest intersection but thats later
+	    frontTransformationMatrix = null;
+	    transformationMatrix = null;
+	    frontSurface = null;
+	   
 	    
 	    for(var i = 0; i < surfaces.length; i++){
 		//check if the current surface has any transforms
 
-		 transformationMatrix = undefined;
-		// console.log(surfaces[i].transforms !== undefined);
+	//	transformationMatrix = undefined;
+	
 		if(surfaces[i].transforms !== undefined){
 		    
 		  
-		   var transformationMatrix = getTransformationMatrix(surfaces[i]);
+		    transformationMatrix = mat4.clone(getTransformationMatrix(surfaces[i]));
 		    
 		    var invertedTransformationMatrix = mat4.create();
 		    mat4.invert(invertedTransformationMatrix, transformationMatrix);
+
+		    //PROBLEM IS HERE!!!!!!
+		    /*
 		    curRay.origin = vec4.fromValues(curRay.origin[0], curRay.origin[1], curRay.origin[2], 1);
 		    curRay.direction = vec4.fromValues(curRay.direction[0], curRay.direction[1], curRay.direction[2], 0);
 		    vec4.transformMat4(curRay.origin, curRay.origin, invertedTransformationMatrix);
 		    vec4.transformMat4(curRay.direction, curRay.direction, invertedTransformationMatrix);
-		}
+		    */
+		    origin = vec4.fromValues(curRay.origin[0], curRay.origin[1], curRay.origin[2], 1);
+		    direction = vec4.fromValues(curRay.direction[0], curRay.direction[1], curRay.direction[2], 0);
+
+		    vec4.transformMat4(origin, origin, invertedTransformationMatrix);
+		    vec4.transformMat4(direction, direction, invertedTransformationMatrix);
+
+		    var tempRay = new Ray(direction, origin);
 		
-		curIntersection = surfaces[i].intersects(curRay);
+		    curIntersection = surfaces[i].intersects(tempRay);
+		}else{
+		    		  		
+		    curIntersection = surfaces[i].intersects(curRay);
+		}
 		
 		if(frontIntersection === null || 
 		   curIntersection !== null && frontIntersection !== null && curIntersection.t < frontIntersection.t){
 		    frontIntersection = curIntersection;
 		    frontSurface = surfaces[i];
 		    frontTransformationMatrix = transformationMatrix;
+		   // curRay.origin = origin;
+		   // curRay.direction = direction;
 		   
 		}
 		
@@ -566,9 +584,9 @@ function render() {
 	    else {
 
 		//if this object was transformed, need to translate back into world coordinates
-		if(frontTransformationMatrix !== undefined){
+		if(frontTransformationMatrix !== null){
 		    //transform our intersection back into world coordinates
-		    var temp = frontIntersection.intersectionPoint;
+		    var temp = vec3.clone(frontIntersection.intersectionPoint);
 		    frontIntersection.intersectionPoint = vec4.fromValues(temp[0], temp[1], temp[2], 1);
 		    vec4.transformMat4(frontIntersection.intersectionPoint, frontIntersection.intersectionPoint, frontTransformationMatrix);
 		    
@@ -577,9 +595,9 @@ function render() {
 		    mat4.invert(temp, frontTransformationMatrix);
 		    mat4.transpose(temp, temp);
 		    
-		    var tempNormal = frontIntersection.normal;
+		    var tempNormal = vec3.clone(frontIntersection.normal);
 		    frontIntersection.normal = vec4.fromValues(tempNormal[0], tempNormal[1], tempNormal[2], 0);
-		   // vec4.transformMat4(frontIntersection.normal, frontIntersection.normal, temp);
+		  
 		    vec4.transformMat4(frontIntersection.normal, frontIntersection.normal, temp);
 		}
 
@@ -649,6 +667,8 @@ $(document).ready(function(){
 	  var transformationMatrix;
 	 // console.log(surfaces[i].transforms !== undefined);
 	  if(surfaces[i].transforms !== undefined){
+	      console.log("surfaces[i]");
+	      console.log(surfaces[i]);
 	      //console.log("hello");
 	      transformationMatrix = getTransformationMatrix(surfaces[i]);
 	      console.log("The transformation matrix is ");
@@ -691,6 +711,7 @@ $(document).ready(function(){
 
 	      frontIntersection = curIntersection;
 	      frontSurface = surfaces[i];
+	    
 	      frontTransformationMatrix = transformationMatrix;
 	  }
 	  
@@ -709,7 +730,7 @@ $(document).ready(function(){
 	      console.log("intersection point is ");
 	      console.log(frontIntersection.intersectionPoint);
 	  }
-	  
+	  console.log("The color is ");
 	  console.log(getColor(frontIntersection, frontSurface, curRay));
       }
       DEBUG = false;
