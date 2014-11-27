@@ -12,6 +12,7 @@ var camera;
 var surfaces;
 var materials;
 var lights;
+var bounceDepth;
 //etc...
 
 //define our objects (may not need some of these...)
@@ -248,7 +249,7 @@ function loadSceneFile(filepath) {
   //TODO - set up camera
     camera = new Camera(scene.camera.eye, scene.camera.up, scene.camera.at, scene.camera.fovy, scene.camera.aspect);
 
-    
+    bounceDepth = scene.bounce_depth;
     //set up array to hold our surfaces
     surfaces = [];
     
