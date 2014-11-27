@@ -13,6 +13,7 @@ var surfaces;
 var materials;
 var lights;
 var bounceDepth;
+var shadowBias;
 //etc...
 
 //define our objects (may not need some of these...)
@@ -99,6 +100,14 @@ Sphere.prototype.intersects = function(ray){
 	else t = t1;
     }
 
+    //check whether the t value is within the bounds
+    //if it isn't return null
+    if(ray.tMin !== undefined){
+	if(t < ray.tMin) return null;
+    }
+    if(ray.tMax !== undefined){
+	if(t > ray.tMax) return null;
+    }
     
 
     var point = vec3.scaleAndAdd([0,0,0], ray.origin, ray.direction, t);
@@ -175,7 +184,15 @@ Triangle.prototype.intersects = function(ray){
     //if we have an intersection
     if(t > EPSILON){
 
-
+	//check whether the t value is within the bounds
+	//if it isn't return null
+	if(ray.tMin !== undefined){
+	    if(t < ray.tMin) return null;
+	}
+	if(ray.tMax !== undefined){
+	    if(t > ray.tMax) return null;
+	}
+	
 	//var point = vec3.scale([0,0,0], ray.direction, t);
 	//vec3.add(point, point, ray.origin);
 	var point = vec3.scaleAndAdd([0,0,0], ray.origin, ray.direction, t);
@@ -209,9 +226,11 @@ var DirectionalLight = function(direction, color){
     this.direction = direction;
     this.color = color;
 };
-var Ray = function(direction, origin){
+var Ray = function(direction, origin, tMax, tMin){
     this.direction = direction;
     this.origin = origin;
+    this.tMax = tMax;
+    this.tMin = tMin;
 };//might not need
 var Intersection = function(t, intersectionPoint, normal){
     this.t = vec3.clone(t);
@@ -231,11 +250,11 @@ function init() {
 //  loadSceneFile("assets/SphereShadingTest1.json");
  //  loadSceneFile("assets/TriangleShadingTest.json");
   //  loadSceneFile("assets/TransformationTest.json");
-    loadSceneFile("assets/FullTest.json");
+  //  loadSceneFile("assets/FullTest.json");
    // loadSceneFile("assets/FullTest2.json");
  //  loadSceneFile("assets/ShadowTest1.json");
    // loadSceneFile("assets/ShadowTest2.json");
-   // loadSceneFile("assets/RecursiveTest.json");
+    loadSceneFile("assets/RecursiveTest.json");
   //  loadSceneFile("assets/2RecursiveTest.json");
    // loadSceneFile("assets/CornellBox.json");
 }
@@ -250,6 +269,7 @@ function loadSceneFile(filepath) {
     camera = new Camera(scene.camera.eye, scene.camera.up, scene.camera.at, scene.camera.fovy, scene.camera.aspect);
 
     bounceDepth = scene.bounce_depth;
+    shadowBias = scene.shadow_bias;
     //set up array to hold our surfaces
     surfaces = [];
     
@@ -325,86 +345,7 @@ function clamp(num, min, max){
     return x;
 }
 
-//this is the color algorithm from the Shirley reading
-function getColor(intersection, surface, ray){
-    var light;
-    var lightPos;
-    var lightDirection;
-    var normal = vec3.clone(intersection.normal);
-    vec3.normalize(normal, normal);
 
-    var eyeDirection = vec3.clone(ray.direction);
-    vec3.normalize(eyeDirection, eyeDirection);
-    for(var i = 0; i < eyeDirection.length; i++){
-	eyeDirection[i] = -eyeDirection[i];
-    }
-
-  
-    //first, figure out the direction of the light based on whether its a directional
-    //light or a point light
-    if(lights.Point !== undefined){
-	light = lights.Point;
-	lightPos = light.position;
-	lightDirection = vec3.subtract([0, 0, 0], lightPos, intersection.intersectionPoint);
-	
-    }
-    else if(lights.Directional !== undefined){
-	light = lights.Directional;
-	//lightDirection = vec3.clone(light.direction);
-	lightDirection = vec3.subtract([0,0,0], [0,0,0], light.direction);
-
-    }
-    else{
-	//if the there isn't any directional or point lights
-	return [0, 0, 0];
-    }
-  
-    //make the light direction unit length
-    vec3.normalize(lightDirection, lightDirection);
-    
-
-    //get the ambient component of our light
-    var ka = vec3.clone(materials[surface.material].ka);
-    vec3.multiply(ka, ka, lights.Ambient.color);
-    
-    
-    //get the diffuse component of our light
-    var kd = vec3.clone(materials[surface.material].kd);
-    
-    vec3.multiply(kd, kd, light.color);
-    var diffuse = Math.max(0, vec3.dot(normal, lightDirection));
-    vec3.scale(kd, kd, diffuse);
-
-    
-    //get the specular component of our light
-    var ks = vec3.clone(materials[surface.material].ks);
-  
-
-    var h = vec3.add([0,0,0], eyeDirection, lightDirection);
-   // console.log(h);
-    vec3.normalize(h, h);
-
-   // var normal = vec3.clone(intersection.normal);
-   // vec3.normalize(normal, normal);
-    var coefficient = Math.max(0, vec3.dot(normal, h));
-   // var coefficient = Math.max(vec3.dot(reflection, v), 0);
-   // console.log(coefficient);
-    coefficient = Math.pow(coefficient, materials[surface.material].shininess);
-    var specular = vec3.scale([0,0,0], ks, coefficient);
-
-        
-    vec3.multiply(specular, specular, light.color);
-
-    var color = vec3.add([0,0,0], ka, kd);
-    vec3.add(color, color, specular);
-
-    for(var i = 0; i < color.length; i++){
-	color[i] = clamp(color[i], 0, 1);
-    }
-    
-
-    return color;
-}
 
 //this is the color algorithm in Joel's slides
 function getColor2(intersection, surface, ray){
@@ -412,6 +353,7 @@ function getColor2(intersection, surface, ray){
     var lightPos;
     var lightDirection;
     var normal = intersection.normal;
+    var maxT; 
     vec3.normalize(normal, normal);
     
   
@@ -420,12 +362,13 @@ function getColor2(intersection, surface, ray){
     if(lights.Point !== undefined){
 	light = lights.Point;
 	lightPos = light.position;
-//	lightDirection = vec3.subtract([0, 0, 0], lightPos, intersection.intersectionPoint);
+	maxT = vec3.length(vec3.subtract([0,0,0], lightPos, intersection.intersectionPoint));
 	lightDirection = vec3.subtract([0,0,0], intersection.intersectionPoint, lightPos);
     }
     else if(lights.Directional !== undefined){
 	
 	light = lights.Directional;
+	maxT = undefined;
 	//lightDirection = vec3.clone(light.direction);
 //	lightDirection = vec3.subtract([0,0,0], [0,0,0], light.direction);
 	lightDirection = vec3.clone(light.direction);
@@ -469,19 +412,37 @@ function getColor2(intersection, surface, ray){
     vec3.scale(ks, ks, coefficient);
    
     var point = vec3.clone(intersection.intersectionPoint);
+
+    //add a small margin to avoid shadow acne
     for(var i = 0; i < point.length; i++){
-	point[i] = point[i] + EPSILON;
+//	point[i] = point[i] + shadowBias;
     }
-    var inShadow = isInShadow(new Ray(negativeLightDirection, point));
+
+    //check if the current point is in a shadow
+   
     
+    
+
+    var inShadow = isInShadow(new Ray(negativeLightDirection, point, maxT));
+    
+    //add ambient to the final color
     var color = vec3.add([0,0,0], ka, [0,0,0]);
+
+    //if the current point isn't in a shadow, also add diffuse and specular lighting
     if(!inShadow){
 	vec3.add(color, color, kd);
 	vec3.add(color, color, ks);
     }
+
     return color;
 }
 
+/*
+  Returns true if the surface point is in a shadow; false otherwise.
+
+  @param {Ray} A Ray object whose origin is the point on the surface and whose direction is towards the light source.
+
+*/
 function isInShadow(ray){
 
     for(var i = 0; i < surfaces.length; i++){
@@ -526,6 +487,9 @@ function getTransformationMatrix(surface){
     return matrix;
 }
 
+//function getMirrorReflectionColor(reflectedRay, 
+
+
 
 
 //renders the scene
@@ -566,13 +530,7 @@ function render() {
 		    var invertedTransformationMatrix = mat4.create();
 		    mat4.invert(invertedTransformationMatrix, transformationMatrix);
 
-		    //PROBLEM IS HERE!!!!!!
-		    /*
-		    curRay.origin = vec4.fromValues(curRay.origin[0], curRay.origin[1], curRay.origin[2], 1);
-		    curRay.direction = vec4.fromValues(curRay.direction[0], curRay.direction[1], curRay.direction[2], 0);
-		    vec4.transformMat4(curRay.origin, curRay.origin, invertedTransformationMatrix);
-		    vec4.transformMat4(curRay.direction, curRay.direction, invertedTransformationMatrix);
-		    */
+	
 		    origin = vec4.fromValues(curRay.origin[0], curRay.origin[1], curRay.origin[2], 1);
 		    direction = vec4.fromValues(curRay.direction[0], curRay.direction[1], curRay.direction[2], 0);
 
@@ -583,7 +541,6 @@ function render() {
 		
 		    curIntersection = surfaces[i].intersects(tempRay);
 		}else{
-		    		  		
 		    curIntersection = surfaces[i].intersects(curRay);
 		}
 		
@@ -618,8 +575,10 @@ function render() {
 		    vec4.transformMat4(frontIntersection.normal, frontIntersection.normal, temp);
 		}
 
-		
-		setPixel(x, y, getColor2(frontIntersection, frontSurface, curRay));
+		var baseColor = getColor2(frontIntersection, frontSurface, curRay);
+	//	var reflectance = getMirrorReflectance(
+
+		setPixel(x, y, baseColor);
 	    }
 	    //see if curRay intersects any objects
 	    //if it intersects more than one get the closest
