@@ -45,10 +45,23 @@ Camera.prototype.castRay = function(x, y){
 
 
 
-var Sphere = function(center, radius, material){
+var Sphere = function(center, radius, material, transforms){
     this.center = center;
     this.radius = radius;
     this.material = material;
+
+    var transformObject = undefined;
+    if(transforms !== undefined){
+	transformObject = {};
+	for(var i = 0; i < transforms.length; i++){
+	    transformObject[transforms[i][0]] = transforms[i][1];
+	}
+    }
+
+    console.log("Transform Object");
+    console.log(transformObject);
+
+    this.transforms = transformObject;
 };
 Sphere.prototype.intersects = function(ray){
     //first calculate the determinant to see how many real solutions there are
@@ -99,11 +112,25 @@ Sphere.prototype.intersects = function(ray){
     return new Intersection(t, point, unitNormal);
 };
 //Sphere.prototype.<method> = function(params){};
-var Triangle = function(p1, p2, p3, material){
+var Triangle = function(p1, p2, p3, material, transforms){
     this.v1 = p1;
     this.v2 = p2;
     this.v3 = p3;
     this.material = material;
+
+    var transformObject = undefined;
+    if(transforms !== undefined){
+	transformObject = {};
+	for(var i = 0; i < transforms.length; i++){
+	    transformObject[transforms[i][0]] = transforms[i][1];
+	}
+    }
+
+    console.log("Transform Object");
+    console.log(transformObject);
+    this.transforms = transformObject;
+
+  
 };
 Triangle.prototype.intersects = function(ray){
 
@@ -287,10 +314,10 @@ function loadSceneFile(filepath) {
 function getSurfaceShape(surface){
    
     if(surface.shape === "Sphere"){
-	return new Sphere(surface.center, surface.radius, surface.material);
+	return new Sphere(surface.center, surface.radius, surface.material, surface.transforms);
     }
     else{
-	return new Triangle(surface.p1, surface.p2, surface.p3, surface.material);
+	return new Triangle(surface.p1, surface.p2, surface.p3, surface.material, surface.transforms);
     }
 }
 
@@ -483,6 +510,28 @@ function getReflection(lightDirection, normal){
    
 }
 
+/*
+  This function returns the current matrix's transformation
+*/
+function getTransformationMatrix(surface){
+    var matrix = mat4.create();
+  
+    if(surface.transforms.Translate !== undefined){
+
+	 mat4.translate(matrix, matrix, surface.transforms.Translate);
+    }
+    if(surface.transforms.Rotate !== undefined){	
+	mat4.rotateX(matrix, matrix, surface.transforms.Rotate[0]);
+	mat4.rotateY(matrix, matrix, surface.transforms.Rotate[1]);
+	mat4.rotateZ(matrix, matrix, surface.transforms.Rotate[2]);
+    }
+    if(surface.transforms.Scale !== undefined){
+	mat4.scale(matrix, matrix, surface.transforms.Scale);
+    }
+  
+    return matrix;
+}
+
 
 
 //renders the scene
@@ -506,6 +555,22 @@ function render() {
 	    //note: going to have to determine closest intersection but thats later
 	    
 	    for(var i = 0; i < surfaces.length; i++){
+		//check if the current surface has any transforms
+
+		var transformationMatrix;
+	 // console.log(surfaces[i].transforms !== undefined);
+		if(surfaces[i].transforms !== undefined){
+		    //console.log("hello");
+		    transformationMatrix = getTransformationMatrix(surfaces[i]);
+		   
+		    var invertedTransformationMatrix = mat4.create();
+		    mat4.invert(invertedTransformationMatrix, transformationMatrix);
+		    curRay.origin = vec4.fromValues(curRay.origin[0], curRay.origin[1], curRay.origin[2], 1);
+		    curRay.direction = vec4.fromValues(curRay.direction[0], curRay.direction[1], curRay.direction[2], 0);
+		    vec4.transformMat4(curRay.origin, curRay.origin, invertedTransformationMatrix);
+		    vec4.transformMat4(curRay.direction, curRay.direction, invertedTransformationMatrix);
+		}
+		
 		curIntersection = surfaces[i].intersects(curRay);
 		
 		if(frontIntersection === null || 
@@ -577,8 +642,48 @@ $(document).ready(function(){
       var curRay =  camera.castRay(x,y); //cast a ray through the point
       console.log(curRay);
       for(var i = 0; i < surfaces.length; i++){
+
+
+	  var transformationMatrix;
+	 // console.log(surfaces[i].transforms !== undefined);
+	  if(surfaces[i].transforms !== undefined){
+	      //console.log("hello");
+	      transformationMatrix = getTransformationMatrix(surfaces[i]);
+	      console.log("The transformation matrix is ");
+	      console.log(transformationMatrix);
+	      var invertedTransformationMatrix = mat4.create();
+	      mat4.invert(invertedTransformationMatrix, transformationMatrix);
+
+	      console.log("The invertedTransformationMatrix is ");
+	      console.log(invertedTransformationMatrix);
+
+	      console.log("curRay.origin is currently ");
+	      console.log(curRay.origin);
+
+	      curRay.origin = vec4.fromValues(curRay.origin[0], curRay.origin[1], curRay.origin[2], 1);
+
+	      console.log("curRay.origin is now");
+	      console.log(curRay.origin);
+
+	      curRay.direction = vec4.fromValues(curRay.direction[0], curRay.direction[1], curRay.direction[2], 0);
+	      console.log("curRay.direction has been transformed to ");
+	      console.log(curRay.direction);
+
+	      vec4.transformMat4(curRay.origin, curRay.origin, invertedTransformationMatrix);
+	      vec4.transformMat4(curRay.direction, curRay.direction, invertedTransformationMatrix);
+	      console.log(curRay);
+	  }
+
+
 	  curIntersection = surfaces[i].intersects(curRay);
-		
+
+	  /*
+	  console.log("surface's transform:");
+	  console.log(surfaces[i].transforms);
+	  console.log("surface's transformation matrix");
+	  console.log(getTransformationMatrix(surfaces[i]));
+	  */
+	  
 	  if(frontIntersection === null || 
 	     curIntersection !== null && frontIntersection !== null && curIntersection.t < frontIntersection.t){
 		    frontIntersection = curIntersection;
