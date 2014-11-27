@@ -227,14 +227,16 @@ function init() {
  // loadSceneFile("assets/SphereTest.json");
 //loadSceneFile("assets/TriangleTest.json");
   //  loadSceneFile("assets/SphereShadingTest2.json");
- // loadSceneFile("assets/SphereShadingTest1.json");
-  // loadSceneFile("assets/TriangleShadingTest.json");
- //   loadSceneFile("assets/TransformationTest.json");
+//  loadSceneFile("assets/SphereShadingTest1.json");
+ //  loadSceneFile("assets/TriangleShadingTest.json");
+  //  loadSceneFile("assets/TransformationTest.json");
     loadSceneFile("assets/FullTest.json");
    // loadSceneFile("assets/FullTest2.json");
- //   loadSceneFile("assets/ShadowTest1.json");
-  //  loadSceneFile("assets/RecursiveTest.json");
+ //  loadSceneFile("assets/ShadowTest1.json");
+   // loadSceneFile("assets/ShadowTest2.json");
+   // loadSceneFile("assets/RecursiveTest.json");
   //  loadSceneFile("assets/2RecursiveTest.json");
+   // loadSceneFile("assets/CornellBox.json");
 }
 
 
@@ -464,12 +466,28 @@ function getColor2(intersection, surface, ray){
     coefficient = Math.pow(coefficient, materials[surface.material].shininess);
     
     vec3.scale(ks, ks, coefficient);
-   // vec3.normalize(ks, ks);
+   
+    var point = vec3.clone(intersection.intersectionPoint);
+    for(var i = 0; i < point.length; i++){
+	point[i] = point[i] + EPSILON;
+    }
+    var inShadow = isInShadow(new Ray(negativeLightDirection, point));
     
-    var color = vec3.add([0,0,0], ka, kd);
-    vec3.add(color, color, ks);
-
+    var color = vec3.add([0,0,0], ka, [0,0,0]);
+    if(!inShadow){
+	vec3.add(color, color, kd);
+	vec3.add(color, color, ks);
+    }
     return color;
+}
+
+function isInShadow(ray){
+
+    for(var i = 0; i < surfaces.length; i++){
+	if(surfaces[i].intersects(ray) !== null) return true;
+    }
+    
+    return false;
 }
 
 /*
@@ -573,9 +591,7 @@ function render() {
 		    frontIntersection = curIntersection;
 		    frontSurface = surfaces[i];
 		    frontTransformationMatrix = transformationMatrix;
-		   // curRay.origin = origin;
-		   // curRay.direction = direction;
-		   
+		 		   
 		}
 		
 		
