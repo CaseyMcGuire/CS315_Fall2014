@@ -41,7 +41,7 @@ Camera.prototype.castRay = function(x, y){
     //calculate direction
     var direction = vec3.fromValues(u, v, -1);
     var origin = vec3.fromValues(0, 0, 0);
-    return new Ray(direction, origin);
+    return new Ray(direction, origin, undefined, shadowBias);
     //return new ray with origin at (0,0,0) and direction
 };
 
@@ -247,10 +247,10 @@ function init() {
  // loadSceneFile("assets/SphereTest.json");
 //loadSceneFile("assets/TriangleTest.json");
   //  loadSceneFile("assets/SphereShadingTest2.json");
-//  loadSceneFile("assets/SphereShadingTest1.json");
+ // loadSceneFile("assets/SphereShadingTest1.json");
  //  loadSceneFile("assets/TriangleShadingTest.json");
   //  loadSceneFile("assets/TransformationTest.json");
- //   loadSceneFile("assets/FullTest.json");
+  //  loadSceneFile("assets/FullTest.json");
    // loadSceneFile("assets/FullTest2.json");
  //  loadSceneFile("assets/ShadowTest1.json");
    // loadSceneFile("assets/ShadowTest2.json");
@@ -612,7 +612,7 @@ function render() {
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
 	    curRay = camera.castRay(x, y);
-	    var color =  getSinglePixelColor(curRay, 0);
+	    var color =  getSinglePixelColor(curRay, -1);
 	    setPixel(x, y, color);
 	    
 	    /*
