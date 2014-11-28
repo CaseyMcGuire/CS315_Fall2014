@@ -250,7 +250,7 @@ function init() {
 //  loadSceneFile("assets/SphereShadingTest1.json");
  //  loadSceneFile("assets/TriangleShadingTest.json");
   //  loadSceneFile("assets/TransformationTest.json");
-  //  loadSceneFile("assets/FullTest.json");
+ //   loadSceneFile("assets/FullTest.json");
    // loadSceneFile("assets/FullTest2.json");
  //  loadSceneFile("assets/ShadowTest1.json");
    // loadSceneFile("assets/ShadowTest2.json");
@@ -348,7 +348,7 @@ function clamp(num, min, max){
 
 
 //this is the color algorithm in Joel's slides
-function getColor2(intersection, surface, ray){
+function getColor(intersection, surface, ray){
     var light;
     var lightPos;
     var lightDirection;
@@ -423,16 +423,18 @@ function getColor2(intersection, surface, ray){
     
     
 
-    var inShadow = isInShadow(new Ray(negativeLightDirection, point, maxT));
+    var inShadow = isInShadow(new Ray(negativeLightDirection, point, maxT, shadowBias));
     
     //add ambient to the final color
     var color = vec3.add([0,0,0], ka, [0,0,0]);
 
-    //if the current point isn't in a shadow, also add diffuse and specular lighting
+    //if the current point *isn't* in a shadow, also add diffuse and specular lighting
     if(!inShadow){
 	vec3.add(color, color, kd);
 	vec3.add(color, color, ks);
     }
+
+    
 
     return color;
 }
@@ -448,7 +450,6 @@ function isInShadow(ray){
     for(var i = 0; i < surfaces.length; i++){
 	if(surfaces[i].intersects(ray) !== null) return true;
     }
-    
     return false;
 }
 
@@ -456,12 +457,17 @@ function isInShadow(ray){
   Returns a reflection vector given the light direction and 
   surface normal
  */
-function getReflection(lightDirection, normal){
-    var dotProduct = vec3.dot(lightDirection, normal);
+function getReflection(direction, normal){
+    var dotProduct = vec3.dot(direction, normal);
     dotProduct = dotProduct * 2;
     var scaledNormal = vec3.scale([0,0,0], normal, dotProduct);
-    return vec3.subtract([0,0,0], lightDirection, scaledNormal);
-   
+    return vec3.subtract([0,0,0], direction, scaledNormal);  
+}
+
+function getReflectedColor(ray, recursionDepth, currentColor){
+    if(recursionDepth >= bounceDepth) return currentColor;
+    
+
 }
 
 /*
@@ -489,6 +495,101 @@ function getTransformationMatrix(surface){
 
 //function getMirrorReflectionColor(reflectedRay, 
 
+function getSinglePixelColor(ray, recursionDepth){
+    if(recursionDepth >= bounceDepth) return [0, 0, 0];
+    var curRay;
+    var curIntersection;
+    var frontIntersection;
+    // var curColor;
+    var frontSurface;
+    var frontTransformationMatrix;
+    var transformationMatrix;
+    var origin;
+    var direction;
+
+    
+    frontIntersection = null;
+    frontTransformationMatrix = null;
+    transformationMatrix = null;
+    frontSurface = null;
+	   
+    
+    for(var i = 0; i < surfaces.length; i++){
+	//check if the current surface has any transforms
+	
+	//	transformationMatrix = undefined;
+	
+	if(surfaces[i].transforms !== undefined){
+	    
+	    
+	    transformationMatrix = mat4.clone(getTransformationMatrix(surfaces[i]));
+	    
+	    var invertedTransformationMatrix = mat4.create();
+	    mat4.invert(invertedTransformationMatrix, transformationMatrix);
+	    
+	    
+	    origin = vec4.fromValues(ray.origin[0], ray.origin[1], ray.origin[2], 1);
+	    direction = vec4.fromValues(ray.direction[0], ray.direction[1], ray.direction[2], 0);
+
+	    vec4.transformMat4(origin, origin, invertedTransformationMatrix);
+	    vec4.transformMat4(direction, direction, invertedTransformationMatrix);
+	    
+	    var tempRay = new Ray(direction, origin, undefined, shadowBias);
+	    
+	    curIntersection = surfaces[i].intersects(tempRay);
+	}else{
+	    curIntersection = surfaces[i].intersects(ray);
+	}
+	
+	if(frontIntersection === null || 
+	   curIntersection !== null && frontIntersection !== null && curIntersection.t < frontIntersection.t){
+	    frontIntersection = curIntersection;
+	    frontSurface = surfaces[i];
+	    frontTransformationMatrix = transformationMatrix;
+		 		   
+	}
+		
+	
+    }
+    if(frontIntersection === null) return [0,0,0];// setPixel(x, y, [0,0,0]);
+    else {
+	
+	//if this object was transformed, need to translate back into world coordinates
+	if(frontTransformationMatrix !== null){
+	    //transform our intersection back into world coordinates
+	    var temp = vec3.clone(frontIntersection.intersectionPoint);
+	    frontIntersection.intersectionPoint = vec4.fromValues(temp[0], temp[1], temp[2], 1);
+	    vec4.transformMat4(frontIntersection.intersectionPoint, frontIntersection.intersectionPoint, frontTransformationMatrix);
+		    
+	    //transform our normal back into world coordinates
+	    temp = mat4.create();
+	    mat4.invert(temp, frontTransformationMatrix);
+	    mat4.transpose(temp, temp);
+	    
+	    var tempNormal = vec3.clone(frontIntersection.normal);
+	    frontIntersection.normal = vec4.fromValues(tempNormal[0], tempNormal[1], tempNormal[2], 0);
+	    
+	    vec4.transformMat4(frontIntersection.normal, frontIntersection.normal, temp);
+	}
+	
+	var baseColor = getColor(frontIntersection, frontSurface, ray);
+	var reflectedDirection = getReflection(ray.direction, frontIntersection.normal);
+	var reflectedRay = new Ray(reflectedDirection, frontIntersection.intersectionPoint, undefined, shadowBias);
+	var reflectionColor = getSinglePixelColor(reflectedRay, recursionDepth+1);
+	
+	//weight by surface's mirror reflectance
+	vec3.multiply(reflectionColor, reflectionColor, materials[frontSurface.material].kr);
+	vec3.add(baseColor, baseColor, reflectionColor);
+	
+	return baseColor;
+	//	setPixel(x, y, baseColor);
+    }
+	    //see if curRay intersects any objects
+    //if it intersects more than one get the closest
+    //otherwise, set it to white
+}
+
+    
 
 
 
@@ -497,7 +598,7 @@ function render() {
   var start = Date.now(); //for logging
 
  
-
+/*
     var curRay;
     var curIntersection;
     var frontIntersection;
@@ -507,10 +608,14 @@ function render() {
     var transformationMatrix;
     var origin;
     var direction;
-    
+    */
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
 	    curRay = camera.castRay(x, y);
+	    var color =  getSinglePixelColor(curRay, 0);
+	    setPixel(x, y, color);
+	    
+	    /*
 	    frontIntersection = null;
 	    frontTransformationMatrix = null;
 	    transformationMatrix = null;
@@ -585,7 +690,11 @@ function render() {
 	    //otherwise, set it to white
 	}
     }
-  
+  */
+}
+}
+
+
     //render the pixels that have been set
   context.putImageData(imageBuffer,0,0);
     
