@@ -52,6 +52,8 @@ var Sphere = function(center, radius, material, transforms){
     this.radius = radius;
     this.material = material;
 
+
+    //if this sphere has any transforms, put them in the transform object
     var transformObject = undefined;
     if(transforms !== undefined){
 	transformObject = {};
@@ -66,7 +68,7 @@ var Sphere = function(center, radius, material, transforms){
 };
 Sphere.prototype.intersects = function(ray){
     //first calculate the determinant to see how many real solutions there are
-    var RayDebug = false;
+  
     if(DEBUG){
 	console.log("Ray's direction is "+ ray.direction);
 	
@@ -136,10 +138,9 @@ var Triangle = function(p1, p2, p3, material, transforms){
 	}
     }
 
-    console.log("Triangle Transform Object");
-    console.log(transformObject);
+
     this.transforms = transformObject;
-    console.log(this);
+
   
 };
 Triangle.prototype.intersects = function(ray){
@@ -198,16 +199,15 @@ Triangle.prototype.intersects = function(ray){
 	    if(t > ray.tMax) return null;
 	}
 	
-	//var point = vec3.scale([0,0,0], ray.direction, t);
-	//vec3.add(point, point, ray.origin);
+	
 	var point = vec3.scaleAndAdd([0,0,0], ray.origin, ray.direction, t);
 	
 	var normal = vec3.cross([0,0,0], edge2, edge1);
 	vec3.normalize(normal, normal);
-
+	
 	return new Intersection(t, point, normal);
     }
-
+    
     //no hit :(
     return null;
 
@@ -251,18 +251,19 @@ function init() {
 
  // loadSceneFile("assets/SphereTest.json");
 //loadSceneFile("assets/TriangleTest.json");
-  //  loadSceneFile("assets/SphereShadingTest2.json");
- // loadSceneFile("assets/SphereShadingTest1.json");
+ //   loadSceneFile("assets/SphereShadingTest2.json");
+//  loadSceneFile("assets/SphereShadingTest1.json");
   // loadSceneFile("assets/TriangleShadingTest.json");
-  //  loadSceneFile("assets/TransformationTest.json");
-    loadSceneFile("assets/FullTest.json");
-   // loadSceneFile("assets/FullTest2.json");
+   // loadSceneFile("assets/TransformationTest.json");
+ //   loadSceneFile("assets/FullTest.json");
+  //  loadSceneFile("assets/FullTest2.json");
   // loadSceneFile("assets/ShadowTest1.json");
    // loadSceneFile("assets/ShadowTest2.json");
-   // loadSceneFile("assets/RecursiveTest.json");
+  //  loadSceneFile("assets/RecursiveTest.json");
   //  loadSceneFile("assets/2RecursiveTest.json");
-  //  loadSceneFile("assets/CornellBox.json");
-  //  loadSceneFile("assets/3CornellBox.json");
+  // loadSceneFile("assets/CornellBox.json");
+   // loadSceneFile("assets/3CornellBox.json");
+    loadSceneFile("assets/RecursiveBalls.json");
 }
 
 
@@ -311,8 +312,7 @@ function loadSceneFile(filepath) {
 /*
 
   Returns an appropriate shape given the surface object
-
-  TODO: will probably need to add more parameters.
+  
 */
 function getSurfaceShape(surface){
    
@@ -323,6 +323,7 @@ function getSurfaceShape(surface){
 	return new Triangle(surface.p1, surface.p2, surface.p3, surface.material, surface.transforms);
     }
 }
+
 
 function getLightType(light){
 
@@ -337,24 +338,15 @@ function getLightType(light){
     }
 }
 
+
 /*
-function clamp(num, min, max){
-    var x;
-    if(num < min){
-	x = min;
-    }
-    else if(num > max){
-	x = max;
-    }
-    else{
-	x = num;
-    }
-    return x;
-}
+  Gets the appropriate color given the intersection point, the surface and the ray.
+
+  @param {Intersection} The closest intersection to the viewer
+  @param {Surface} The surface that was hit
+  @param {Ray} The ray that was fired.
+  @return {vec3} The color for that pixel
 */
-
-
-//this is the color algorithm in Joel's slides
 function getColor(intersection, surface, ray){
     var light;
     var lightPos;
@@ -383,19 +375,19 @@ function getColor(intersection, surface, ray){
 	return [0, 0, 0];
     }
 
+    
     vec3.normalize(lightDirection, lightDirection);
    var negativeLightDirection = vec3.subtract([0,0,0], [0,0,0], lightDirection);
    
 
     var reflection = vec3.normalize([0,0,0], getReflection(lightDirection, normal));
     vec3.normalize(reflection, reflection);
-   // vec3.subtract(lightDirection, [0,0,0], lightDirection);
+  
     //get the ambient component of our light
- 
     var ka = vec3.clone(materials[surface.material].ka);
     vec3.multiply(ka, ka, lights.Ambient.color);
     
-
+    //get the diffuse component of our light
     var kd = vec3.clone(materials[surface.material].kd);
     vec3.multiply(kd, kd, light.color);
 
@@ -403,10 +395,8 @@ function getColor(intersection, surface, ray){
     var diffuse = Math.max(0, vec3.dot(normal, negativeLightDirection));
     vec3.scale(kd, kd, diffuse);
 
-    
+    //get the specular component of our light
     var ks = vec3.clone(materials[surface.material].ks);
-    
-
     //get vector that points toward the camera
     var v = vec3.clone(ray.direction);
     for(var i = 0; i < v.length; i++){
@@ -428,12 +418,13 @@ function getColor(intersection, surface, ray){
     //check if the current point is in a shadow
     var inShadow = isInShadow(new Ray(negativeLightDirection, point, maxT, shadowBias));
     
-    //add ambient to the final color
+    //add ambient to the final color 
     var color = vec3.add([0,0,0], ka, [0,0,0]);
 
     //if the current point *isn't* in a shadow, also add diffuse and specular lighting
     if(!inShadow){
 	vec3.add(color, color, kd);
+	//if the current point doesn't have any shininess, don't add any specular lighting
 	if(shininess !== 0){
 	    vec3.add(color, color, ks);
 	}
@@ -446,7 +437,7 @@ function getColor(intersection, surface, ray){
   Returns true if the surface point is in a shadow; false otherwise.
 
   @param {Ray} A Ray object whose origin is the point on the surface and whose direction is towards the light source.
-
+  @return {boolean} True if the ray hits an object; false otherwise
 */
 function isInShadow(ray){
 
@@ -459,6 +450,10 @@ function isInShadow(ray){
 /*
   Returns a reflection vector given the light direction and 
   surface normal
+
+  @param {vec3} The direction vector you want to find a reflection of.
+  @param {vec3} The normal of the surface
+  @return {vec3} The reflected vector
  */
 function getReflection(direction, normal){
     var dotProduct = vec3.dot(direction, normal);
@@ -471,6 +466,8 @@ function getReflection(direction, normal){
 
 /*
   This function returns the current matrix's transformation
+
+  @return {mat4} The transformation matrix for the passed surface
 */
 function getTransformationMatrix(surface){
     var matrix = mat4.create();
@@ -497,8 +494,12 @@ function getTransformationMatrix(surface){
     return matrix;
 }
 
-//function getMirrorReflectionColor(reflectedRay, 
+/*
+  Get a single pixel's color.
 
+  @param {Ray} The current ray that was fired
+  @param {float} The current depth of the recursion
+*/
 function getSinglePixelColor(ray, recursionDepth){
     if(DEBUG){
 	console.log("recursionDepth is ");
@@ -555,6 +556,7 @@ function getSinglePixelColor(ray, recursionDepth){
 	    curIntersection = surfaces[i].intersects(ray);
 	}
 	
+	//if the current intersection is closer than the current king, replace it
 	if(frontIntersection === null || 
 	   curIntersection !== null && frontIntersection !== null && curIntersection.t < frontIntersection.t){
 	    frontIntersection = curIntersection;
@@ -570,7 +572,10 @@ function getSinglePixelColor(ray, recursionDepth){
 	console.log("The front surface is");
 	console.log(frontSurface);
     }
-    if(frontIntersection === null) return [0,0,0];// setPixel(x, y, [0,0,0]);
+    if(frontIntersection === null) {
+	if(DEBUG) console.log("frontIntersection was null");
+	return [0,0,0];// setPixel(x, y, [0,0,0]);
+    }
     else {
 	
 	//if this object was transformed, need to translate back into world coordinates
@@ -591,12 +596,17 @@ function getSinglePixelColor(ray, recursionDepth){
 	    vec4.transformMat4(frontIntersection.normal, frontIntersection.normal, temp);
 	}
 	
+	//the color for this level of recursion
 	var baseColor = getColor(frontIntersection, frontSurface, ray);
+
+	//reflect a ray from the current intersection point
 	var reflectedDirection = getReflection(ray.direction, frontIntersection.normal);
 	var reflectedRay = new Ray(reflectedDirection, frontIntersection.intersectionPoint, undefined, shadowBias);
+
+	//find the color in the reflected direction
 	var reflectionColor = getSinglePixelColor(reflectedRay, recursionDepth+1);
 	
-	//weight by surface's mirror reflectance
+	//weight by surface's mirror reflectance and add it to final color
 	vec3.multiply(reflectionColor, reflectionColor, materials[frontSurface.material].kr);
 	vec3.add(baseColor, baseColor, reflectionColor);
 	
@@ -610,6 +620,7 @@ function getSinglePixelColor(ray, recursionDepth){
 function render() {
     var start = Date.now(); //for logging
 
+    //color each pixel of the image
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
 	    curRay = camera.castRay(x, y);

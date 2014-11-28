@@ -7,7 +7,7 @@
 * What is your name?
 ***********************************************************************/
 
-<Replace this with your response--remember to delete the angle brackets>
+Casey McGuire
 
 
 
@@ -16,7 +16,7 @@
 * it a scene of?
 ***********************************************************************/
 
-<Replace this with your response!>
+Yes, it is scene of highly reflective spheres.
 
 
 
@@ -24,7 +24,7 @@
 * Did you complete any other extensions to this assignment? If so, what?
 ***********************************************************************/
 
-<Replace this with your response!>
+No.
 
 
 
@@ -32,7 +32,7 @@
 * Approximately how many hours did you spend working on this assignment?
 ***********************************************************************/
 
-<Replace this with your response!>
+25ish.
 
 
 
@@ -42,7 +42,7 @@
  * How can I make this assignment better?
  **********************************************************************/
 
--I spend quite a bit of time trying to get my triangle to shade correctly.It tended to be show up very dark and I couldn't figure out why. It turns out that the unit normal was pointing the wrong way and if I took its negative it shaded correctly. It might be a good idea to warn students that if their colors aren't showing up correctly and their algorithm looks correct, they might try changing the direction of their normals.
+- This was a really fun assignment. 
 
 
 
@@ -52,6 +52,7 @@
  * doing the assignment, whether you enjoyed doing it, etc.
  **********************************************************************/
 
-<Replace this with your response!>
+All of my scenes look good except for the Cornell Box, which doesn't show up at all. I'm going to 
+email you about it but right now I have to turn it in because I don't have anymore time.
 
 
