@@ -271,9 +271,9 @@ function init() {
    // loadSceneFile("assets/ShadowTest2.json");
   //  loadSceneFile("assets/RecursiveTest.json");
   //  loadSceneFile("assets/2RecursiveTest.json");
-   loadSceneFile("assets/CornellBox.json");
+ //  loadSceneFile("assets/CornellBox.json");
    // loadSceneFile("assets/3CornellBox.json");
-  //  loadSceneFile("assets/RecursiveBalls.json");
+    loadSceneFile("assets/RecursiveBalls.json");
 }
 
 
