@@ -204,8 +204,16 @@ Triangle.prototype.intersects = function(ray){
 	
 	var point = vec3.scaleAndAdd([0,0,0], ray.origin, ray.direction, t);
 	
-	var normal = vec3.cross([0,0,0], edge2, edge1);
+
+	//if angle between normal and ray direction is greater than 90 then flip
+	var normal = vec3.cross([0,0,0], edge1, edge2);
 	vec3.normalize(normal, normal);
+
+	if(isGreaterThan90Degrees(normal, ray.direction)){
+	    for(var i = 0; i < normal.length; i++){
+		normal[i] = -normal[i];
+	    }
+	}
 	
 	return new Intersection(t, point, normal);
     }
@@ -253,11 +261,11 @@ function init() {
 
  // loadSceneFile("assets/SphereTest.json");
 //loadSceneFile("assets/TriangleTest.json");
- //   loadSceneFile("assets/SphereShadingTest2.json");
-//  loadSceneFile("assets/SphereShadingTest1.json");
+//    loadSceneFile("assets/SphereShadingTest2.json");
+ // loadSceneFile("assets/SphereShadingTest1.json");
   // loadSceneFile("assets/TriangleShadingTest.json");
    // loadSceneFile("assets/TransformationTest.json");
- //  loadSceneFile("assets/FullTest.json");
+  // loadSceneFile("assets/FullTest.json");
   //  loadSceneFile("assets/FullTest2.json");
   // loadSceneFile("assets/ShadowTest1.json");
    // loadSceneFile("assets/ShadowTest2.json");
@@ -312,7 +320,36 @@ function loadSceneFile(filepath) {
 }
 
 /*
+  Returns true if the angle between the two vectors is greater than 90 degrees.
 
+  @param {vec3} The first vector
+  @param {vec3} The second vector
+  @return {boolean} Whether the angle between the two vectors is greater than 90.
+*/
+function isGreaterThan90Degrees(vec1, vec2){
+
+    var temp1 = vec3.clone(vec1);
+    var temp2 = vec3.clone(vec2);
+    if(DEBUG){
+	console.log("temp1 and temp2");
+	console.log(temp1);
+	console.log(temp2);
+    }
+
+    vec3.normalize(temp1, temp1);
+    vec3.normalize(temp2, temp2);
+
+    var dot = vec3.dot(temp1, temp2);
+    if(DEBUG) {
+	console.log("dot: ");
+	console.log(dot);
+    }
+    if(dot > 0) return true;
+    else return false;
+    
+}
+
+/*
   Returns an appropriate shape given the surface object
   
 */
@@ -326,7 +363,13 @@ function getSurfaceShape(surface){
     }
 }
 
+/*
+  Returns the appropriate light for the given light object.
 
+  @param{Object} a light object with a source field
+  @return{Object} an appropriate light object
+
+*/
 function getLightType(light){
 
     if(light.source === "Ambient"){
