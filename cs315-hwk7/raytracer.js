@@ -39,8 +39,10 @@ Camera.prototype.castRay = function(x, y){
     var u = (this.w * x/(canvas.width - 1)) - (this.w/2.0);
     var v = (-this.h * y/(canvas.height - 1)) + (this.h/2.0);
     //calculate direction
+
+    //where is eye used??
     var direction = vec3.fromValues(u, v, -1);
-    var origin = vec3.fromValues(0, 0, 0);
+    var origin = vec3.clone(this.eye);//vec3.clone(this.at);// vec3.fromValues(0, 0, 0);
     return new Ray(direction, origin, undefined, shadowBias);
     //return new ray with origin at (0,0,0) and direction
 };
@@ -255,15 +257,15 @@ function init() {
 //  loadSceneFile("assets/SphereShadingTest1.json");
   // loadSceneFile("assets/TriangleShadingTest.json");
    // loadSceneFile("assets/TransformationTest.json");
- //   loadSceneFile("assets/FullTest.json");
+ //  loadSceneFile("assets/FullTest.json");
   //  loadSceneFile("assets/FullTest2.json");
   // loadSceneFile("assets/ShadowTest1.json");
    // loadSceneFile("assets/ShadowTest2.json");
   //  loadSceneFile("assets/RecursiveTest.json");
   //  loadSceneFile("assets/2RecursiveTest.json");
-  // loadSceneFile("assets/CornellBox.json");
+   loadSceneFile("assets/CornellBox.json");
    // loadSceneFile("assets/3CornellBox.json");
-    loadSceneFile("assets/RecursiveBalls.json");
+  //  loadSceneFile("assets/RecursiveBalls.json");
 }
 
 
