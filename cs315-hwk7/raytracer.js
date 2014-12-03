@@ -105,7 +105,7 @@ Sphere.prototype.intersects = function(ray){
 	if(t1 > t2) t = t2;
 	else t = t1;
     }
-    if(DEBUG) console.log("Hello");
+    
     //check whether the t value is within the bounds
     //if it isn't return null
     if(ray.tMin !== undefined){
@@ -115,13 +115,12 @@ Sphere.prototype.intersects = function(ray){
 	if(t > ray.tMax) return null;
     }
     
-    if(DEBUG){
-	console.log("t is ");
-	console.log(t);
-    }
+    
+
     var point = vec3.scaleAndAdd([0,0,0], ray.origin, ray.direction, t);
     var normal = vec3.subtract([0, 0, 0], point, this.center);
     var unitNormal = vec3.scale([0,0,0], normal, 1/this.radius);
+
     
     return new Intersection(t, point, unitNormal);
 };
@@ -209,6 +208,7 @@ Triangle.prototype.intersects = function(ray){
 	var normal = vec3.cross([0,0,0], edge1, edge2);
 	vec3.normalize(normal, normal);
 
+	//make sure the normal is pointing the right way
 	if(isGreaterThan90Degrees(normal, ray.direction)){
 	    for(var i = 0; i < normal.length; i++){
 		normal[i] = -normal[i];
@@ -271,7 +271,7 @@ function init() {
    // loadSceneFile("assets/ShadowTest2.json");
   //  loadSceneFile("assets/RecursiveTest.json");
   //  loadSceneFile("assets/2RecursiveTest.json");
- //  loadSceneFile("assets/CornellBox.json");
+  // loadSceneFile("assets/CornellBox.json");
    // loadSceneFile("assets/3CornellBox.json");
     loadSceneFile("assets/RecursiveBalls.json");
 }
@@ -282,7 +282,7 @@ function loadSceneFile(filepath) {
   scene = Utils.loadJSON(filepath); //load the scene
     console.log("We're loading " + filepath);
 
-  //TODO - set up camera
+
     camera = new Camera(scene.camera.eye, scene.camera.up, scene.camera.at, scene.camera.fovy, scene.camera.aspect);
 
     bounceDepth = scene.bounce_depth;
@@ -331,9 +331,9 @@ function isGreaterThan90Degrees(vec1, vec2){
     var temp1 = vec3.clone(vec1);
     var temp2 = vec3.clone(vec2);
     if(DEBUG){
-	console.log("temp1 and temp2");
-	console.log(temp1);
-	console.log(temp2);
+//	console.log("temp1 and temp2");
+//	console.log(temp1);
+//	console.log(temp2);
     }
 
     vec3.normalize(temp1, temp1);
@@ -341,8 +341,8 @@ function isGreaterThan90Degrees(vec1, vec2){
 
     var dot = vec3.dot(temp1, temp2);
     if(DEBUG) {
-	console.log("dot: ");
-	console.log(dot);
+//	console.log("dot: ");
+//	console.log(dot);
     }
     if(dot > 0) return true;
     else return false;
@@ -551,12 +551,11 @@ function getSinglePixelColor(ray, recursionDepth){
 	console.log(recursionDepth);
 	console.log("bounceDepth is ");
 	console.log(bounceDepth);
+	console.log("is recursionDepth greater than or equal to bounceDepth?");
 	console.log(recursionDepth >= bounceDepth);
     }
     if(recursionDepth >= bounceDepth) return [0, 0, 0];
-    if(DEBUG){
-	console.log("Hola");
-    }
+    
     var curRay;
     var curIntersection;
     var frontIntersection;

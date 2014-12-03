@@ -1,11 +1,11 @@
 {
     "camera" : {
-	"eye" : [0.0, 0.0, 1.0],
+	"eye" : [0.0, 0.0, -0.3],
 	"up" : [0.0, 1.0, 0.0],
 	"at" : [0.0, 0.0, -1.0],
 	"fovy" : 45, "aspect" : 1 
     },
-    "bounce_depth" : 10,
+    "bounce_depth" : 15,
     "shadow_bias" : 0.0001,
     
     "lights" : [ 
@@ -166,8 +166,8 @@
 	    "radius" : 0.5,
 	    "material" : 8,
 	    "transforms" : [
-		["Translate", [0, 0, -3]],
-		["Scale", [0.8, 0.8, 0.8]]
+		["Translate", [0, 0, -3.5]],
+		["Scale", [1.0, 1.0, 0.8]]
 	    ]			
 	}
     ]
