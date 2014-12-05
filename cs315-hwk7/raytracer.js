@@ -39,8 +39,10 @@ Camera.prototype.castRay = function(x, y){
     var u = (this.w * x/(canvas.width - 1)) - (this.w/2.0);
     var v = (-this.h * y/(canvas.height - 1)) + (this.h/2.0);
     //calculate direction
+
+    //where is eye used??
     var direction = vec3.fromValues(u, v, -1);
-    var origin = vec3.fromValues(0, 0, 0);
+    var origin = vec3.clone(this.eye);//vec3.clone(this.at);// vec3.fromValues(0, 0, 0);
     return new Ray(direction, origin, undefined, shadowBias);
     //return new ray with origin at (0,0,0) and direction
 };
@@ -103,7 +105,7 @@ Sphere.prototype.intersects = function(ray){
 	if(t1 > t2) t = t2;
 	else t = t1;
     }
-    if(DEBUG) console.log("Hello");
+    
     //check whether the t value is within the bounds
     //if it isn't return null
     if(ray.tMin !== undefined){
@@ -113,13 +115,12 @@ Sphere.prototype.intersects = function(ray){
 	if(t > ray.tMax) return null;
     }
     
-    if(DEBUG){
-	console.log("t is ");
-	console.log(t);
-    }
+    
+
     var point = vec3.scaleAndAdd([0,0,0], ray.origin, ray.direction, t);
     var normal = vec3.subtract([0, 0, 0], point, this.center);
     var unitNormal = vec3.scale([0,0,0], normal, 1/this.radius);
+
     
     return new Intersection(t, point, unitNormal);
 };
@@ -202,8 +203,17 @@ Triangle.prototype.intersects = function(ray){
 	
 	var point = vec3.scaleAndAdd([0,0,0], ray.origin, ray.direction, t);
 	
-	var normal = vec3.cross([0,0,0], edge2, edge1);
+
+	//if angle between normal and ray direction is greater than 90 then flip
+	var normal = vec3.cross([0,0,0], edge1, edge2);
 	vec3.normalize(normal, normal);
+
+	//make sure the normal is pointing the right way
+	if(isGreaterThan90Degrees(normal, ray.direction)){
+	    for(var i = 0; i < normal.length; i++){
+		normal[i] = -normal[i];
+	    }
+	}
 	
 	return new Intersection(t, point, normal);
     }
@@ -251,11 +261,11 @@ function init() {
 
  // loadSceneFile("assets/SphereTest.json");
 //loadSceneFile("assets/TriangleTest.json");
- //   loadSceneFile("assets/SphereShadingTest2.json");
-//  loadSceneFile("assets/SphereShadingTest1.json");
+//    loadSceneFile("assets/SphereShadingTest2.json");
+ // loadSceneFile("assets/SphereShadingTest1.json");
   // loadSceneFile("assets/TriangleShadingTest.json");
    // loadSceneFile("assets/TransformationTest.json");
- //   loadSceneFile("assets/FullTest.json");
+  // loadSceneFile("assets/FullTest.json");
   //  loadSceneFile("assets/FullTest2.json");
   // loadSceneFile("assets/ShadowTest1.json");
    // loadSceneFile("assets/ShadowTest2.json");
@@ -272,7 +282,7 @@ function loadSceneFile(filepath) {
   scene = Utils.loadJSON(filepath); //load the scene
     console.log("We're loading " + filepath);
 
-  //TODO - set up camera
+
     camera = new Camera(scene.camera.eye, scene.camera.up, scene.camera.at, scene.camera.fovy, scene.camera.aspect);
 
     bounceDepth = scene.bounce_depth;
@@ -310,7 +320,36 @@ function loadSceneFile(filepath) {
 }
 
 /*
+  Returns true if the angle between the two vectors is greater than 90 degrees.
 
+  @param {vec3} The first vector
+  @param {vec3} The second vector
+  @return {boolean} Whether the angle between the two vectors is greater than 90.
+*/
+function isGreaterThan90Degrees(vec1, vec2){
+
+    var temp1 = vec3.clone(vec1);
+    var temp2 = vec3.clone(vec2);
+    if(DEBUG){
+//	console.log("temp1 and temp2");
+//	console.log(temp1);
+//	console.log(temp2);
+    }
+
+    vec3.normalize(temp1, temp1);
+    vec3.normalize(temp2, temp2);
+
+    var dot = vec3.dot(temp1, temp2);
+    if(DEBUG) {
+//	console.log("dot: ");
+//	console.log(dot);
+    }
+    if(dot > 0) return true;
+    else return false;
+    
+}
+
+/*
   Returns an appropriate shape given the surface object
   
 */
@@ -324,7 +363,13 @@ function getSurfaceShape(surface){
     }
 }
 
+/*
+  Returns the appropriate light for the given light object.
 
+  @param{Object} a light object with a source field
+  @return{Object} an appropriate light object
+
+*/
 function getLightType(light){
 
     if(light.source === "Ambient"){
@@ -506,12 +551,11 @@ function getSinglePixelColor(ray, recursionDepth){
 	console.log(recursionDepth);
 	console.log("bounceDepth is ");
 	console.log(bounceDepth);
+	console.log("is recursionDepth greater than or equal to bounceDepth?");
 	console.log(recursionDepth >= bounceDepth);
     }
     if(recursionDepth >= bounceDepth) return [0, 0, 0];
-    if(DEBUG){
-	console.log("Hola");
-    }
+    
     var curRay;
     var curIntersection;
     var frontIntersection;
