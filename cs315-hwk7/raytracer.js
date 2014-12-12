@@ -248,7 +248,7 @@ var Ray = function(direction, origin, tMax, tMin){
     this.tMin = tMin;
 };//might not need
 var Intersection = function(t, intersectionPoint, normal){
-    this.t = vec3.clone(t);
+    this.t = t;
     this.intersectionPoint = vec3.clone(intersectionPoint);
     this.normal = vec3.clone(normal);
 };//might not need
