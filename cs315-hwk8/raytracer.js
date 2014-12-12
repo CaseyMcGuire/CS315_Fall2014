@@ -39,19 +39,21 @@ Camera.prototype.castRay = function(x, y){
     var u = (this.w * x/(canvas.width - 1)) - (this.w/2.0);
     var v = (-this.h * y/(canvas.height - 1)) + (this.h/2.0);
     //calculate direction
+
+    //where is eye used??
     var direction = vec3.fromValues(u, v, -1);
-    var origin = vec3.fromValues(0, 0, 0);
+    var origin = vec3.clone(this.eye);//vec3.clone(this.at);// vec3.fromValues(0, 0, 0);
     return new Ray(direction, origin, undefined, shadowBias);
     //return new ray with origin at (0,0,0) and direction
 };
 
 
 
-var Sphere = function(center, radius, material, transforms){
+var Sphere = function(center, radius, material, transforms, name){
     this.center = center;
     this.radius = radius;
     this.material = material;
-
+    this.name = name;
 
     //if this sphere has any transforms, put them in the transform object
     var transformObject = undefined;
@@ -70,7 +72,7 @@ Sphere.prototype.intersects = function(ray){
     //first calculate the determinant to see how many real solutions there are
   
     if(DEBUG){
-	console.log("Ray's direction is "+ ray.direction);
+//	console.log("Ray's direction is "+ ray.direction);
 	
     }
     var a = vec3.dot(ray.direction, ray.direction);//d dot d
@@ -79,8 +81,8 @@ Sphere.prototype.intersects = function(ray){
     var discriminant = Math.pow(b, 2) -  a * (c - Math.pow(this.radius, 2));
     
     if(DEBUG){
-	console.log("discriminant is");
-	console.log(discriminant);
+//	console.log("discriminant is");
+//	console.log(discriminant);
     }
  
     //if the discriminant is negative, the line and the object don't intersect
@@ -89,9 +91,9 @@ Sphere.prototype.intersects = function(ray){
     var t2 = (-b + Math.sqrt(discriminant))/a;
 
     if(DEBUG){
-	console.log("t1" + t1);
-	console.log("t2" + t2);
-	console.log("discriminant" + discriminant);
+//	console.log("t1" + t1);
+//	console.log("t2" + t2);
+//	console.log("discriminant" + discriminant);
     }
 
     var t;    
@@ -103,7 +105,7 @@ Sphere.prototype.intersects = function(ray){
 	if(t1 > t2) t = t2;
 	else t = t1;
     }
-    if(DEBUG) console.log("Hello");
+    
     //check whether the t value is within the bounds
     //if it isn't return null
     if(ray.tMin !== undefined){
@@ -113,13 +115,12 @@ Sphere.prototype.intersects = function(ray){
 	if(t > ray.tMax) return null;
     }
     
-    if(DEBUG){
-	console.log("t is ");
-	console.log(t);
-    }
+    
+
     var point = vec3.scaleAndAdd([0,0,0], ray.origin, ray.direction, t);
     var normal = vec3.subtract([0, 0, 0], point, this.center);
     var unitNormal = vec3.scale([0,0,0], normal, 1/this.radius);
+
     
     return new Intersection(t, point, unitNormal);
 };
@@ -202,8 +203,17 @@ Triangle.prototype.intersects = function(ray){
 	
 	var point = vec3.scaleAndAdd([0,0,0], ray.origin, ray.direction, t);
 	
-	var normal = vec3.cross([0,0,0], edge2, edge1);
+
+	//if angle between normal and ray direction is greater than 90 then flip
+	var normal = vec3.cross([0,0,0], edge1, edge2);
 	vec3.normalize(normal, normal);
+
+	//make sure the normal is pointing the right way
+	if(isGreaterThan90Degrees(normal, ray.direction)){
+	    for(var i = 0; i < normal.length; i++){
+		normal[i] = -normal[i];
+	    }
+	}
 	
 	return new Intersection(t, point, normal);
     }
@@ -238,7 +248,7 @@ var Ray = function(direction, origin, tMax, tMin){
     this.tMin = tMin;
 };//might not need
 var Intersection = function(t, intersectionPoint, normal){
-    this.t = vec3.clone(t);
+    this.t = t;
     this.intersectionPoint = vec3.clone(intersectionPoint);
     this.normal = vec3.clone(normal);
 };//might not need
@@ -251,11 +261,11 @@ function init() {
 
  // loadSceneFile("assets/SphereTest.json");
 //loadSceneFile("assets/TriangleTest.json");
- //   loadSceneFile("assets/SphereShadingTest2.json");
-//  loadSceneFile("assets/SphereShadingTest1.json");
+//    loadSceneFile("assets/SphereShadingTest2.json");
+ // loadSceneFile("assets/SphereShadingTest1.json");
   // loadSceneFile("assets/TriangleShadingTest.json");
    // loadSceneFile("assets/TransformationTest.json");
- //   loadSceneFile("assets/FullTest.json");
+  // loadSceneFile("assets/FullTest.json");
   //  loadSceneFile("assets/FullTest2.json");
   // loadSceneFile("assets/ShadowTest1.json");
    // loadSceneFile("assets/ShadowTest2.json");
@@ -264,6 +274,7 @@ function init() {
   // loadSceneFile("assets/CornellBox.json");
    // loadSceneFile("assets/3CornellBox.json");
     loadSceneFile("assets/RecursiveBalls.json");
+   // loadSceneFile("assets/1test.json");
 }
 
 
@@ -272,7 +283,7 @@ function loadSceneFile(filepath) {
   scene = Utils.loadJSON(filepath); //load the scene
     console.log("We're loading " + filepath);
 
-  //TODO - set up camera
+
     camera = new Camera(scene.camera.eye, scene.camera.up, scene.camera.at, scene.camera.fovy, scene.camera.aspect);
 
     bounceDepth = scene.bounce_depth;
@@ -310,21 +321,56 @@ function loadSceneFile(filepath) {
 }
 
 /*
+  Returns true if the angle between the two vectors is greater than 90 degrees.
 
+  @param {vec3} The first vector
+  @param {vec3} The second vector
+  @return {boolean} Whether the angle between the two vectors is greater than 90.
+*/
+function isGreaterThan90Degrees(vec1, vec2){
+
+    var temp1 = vec3.clone(vec1);
+    var temp2 = vec3.clone(vec2);
+    if(DEBUG){
+//	console.log("temp1 and temp2");
+//	console.log(temp1);
+//	console.log(temp2);
+    }
+
+    vec3.normalize(temp1, temp1);
+    vec3.normalize(temp2, temp2);
+
+    var dot = vec3.dot(temp1, temp2);
+    if(DEBUG) {
+//	console.log("dot: ");
+//	console.log(dot);
+    }
+    if(dot > 0) return true;
+    else return false;
+    
+}
+
+/*
   Returns an appropriate shape given the surface object
   
 */
 function getSurfaceShape(surface){
    
     if(surface.shape === "Sphere"){
-	return new Sphere(surface.center, surface.radius, surface.material, surface.transforms);
+	return new Sphere(surface.center, surface.radius, surface.material, surface.transforms, surface.name);
     }
     else{
 	return new Triangle(surface.p1, surface.p2, surface.p3, surface.material, surface.transforms);
     }
 }
 
+/*
+  Returns the appropriate light for the given light object.
 
+  @param{Object} a light object with a source field
+  @return{Object} an appropriate light object
+x
+*/
 function getLightType(light){
 
     if(light.source === "Ambient"){
@@ -473,8 +519,8 @@ function getTransformationMatrix(surface){
     var matrix = mat4.create();
 
     if(DEBUG){
-	console.log("This surface is");
-	console.log(surface);
+//	console.log("This surface is");
+//	console.log(surface);
     }
   
     if(surface.transforms.Translate !== undefined){
@@ -502,16 +548,15 @@ function getTransformationMatrix(surface){
 */
 function getSinglePixelColor(ray, recursionDepth){
     if(DEBUG){
-	console.log("recursionDepth is ");
-	console.log(recursionDepth);
-	console.log("bounceDepth is ");
-	console.log(bounceDepth);
-	console.log(recursionDepth >= bounceDepth);
+//	console.log("recursionDepth is ");
+//	console.log(recursionDepth);
+//	console.log("bounceDepth is ");
+//	console.log(bounceDepth);
+//	console.log("is recursionDepth greater than or equal to bounceDepth?");
+//	console.log(recursionDepth >= bounceDepth);
     }
     if(recursionDepth >= bounceDepth) return [0, 0, 0];
-    if(DEBUG){
-	console.log("Hola");
-    }
+    
     var curRay;
     var curIntersection;
     var frontIntersection;
@@ -533,6 +578,9 @@ function getSinglePixelColor(ray, recursionDepth){
 	//check if the current surface has any transforms
 	
 	//	transformationMatrix = undefined;
+	if(DEBUG){
+	    console.log(surfaces[i].name);
+	}
 	
 	if(surfaces[i].transforms !== undefined){
 	    
@@ -555,10 +603,22 @@ function getSinglePixelColor(ray, recursionDepth){
 	}else{
 	    curIntersection = surfaces[i].intersects(ray);
 	}
+
+	if(DEBUG){
+	    console.log("----------");
+	    console.log(curIntersection);
+	    console.log(surfaces[i].name);
+	    console.log("--------------");
+	}
 	
 	//if the current intersection is closer than the current king, replace it
 	if(frontIntersection === null || 
 	   curIntersection !== null && frontIntersection !== null && curIntersection.t < frontIntersection.t){
+
+	    if(DEBUG){
+		console.log("our new front surface");
+		console.log(surfaces[i]);
+	    }
 	    frontIntersection = curIntersection;
 	    frontSurface = surfaces[i];
 	    frontTransformationMatrix = transformationMatrix;
@@ -569,11 +629,11 @@ function getSinglePixelColor(ray, recursionDepth){
     }
 
     if(DEBUG){
-	console.log("The front surface is");
-	console.log(frontSurface);
+//	console.log("The front surface is");
+//	console.log(frontSurface);
     }
     if(frontIntersection === null) {
-	if(DEBUG) console.log("frontIntersection was null");
+//	if(DEBUG) console.log("frontIntersection was null");
 	return [0,0,0];// setPixel(x, y, [0,0,0]);
     }
     else {
@@ -595,7 +655,10 @@ function getSinglePixelColor(ray, recursionDepth){
 	    
 	    vec4.transformMat4(frontIntersection.normal, frontIntersection.normal, temp);
 	}
-	
+
+	if(DEBUG){
+	    console.log(frontSurface.name);
+	}
 	//the color for this level of recursion
 	var baseColor = getColor(frontIntersection, frontSurface, ray);
 
