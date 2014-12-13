@@ -9,8 +9,8 @@
 	"shadow_bias" : 0.0001,
 
 	"lights" : [ 
-		{"source" : "Ambient", "color" : [0.1,0.1,0.1]},
-		{"source" : "Point", "position" : [2, 0, -1], "color" : [1,1,1]}
+	    {"source" : "Ambient", "color" : [0.1,0.1,0.1]},
+	    {"source" : "Point", "position" : [2, 0, -1], "color" : [1,1,1]}
 	],
 
 	"materials" : [ 
