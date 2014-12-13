@@ -369,7 +369,6 @@ function getSurfaceShape(surface){
 
   @param{Object} a light object with a source field
   @return{Object} an appropriate light object
-x
 */
 function getLightType(light){
 
@@ -683,6 +682,7 @@ function getSinglePixelColor(ray, recursionDepth){
 function render() {
     var start = Date.now(); //for logging
 
+/*
     //color each pixel of the image
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
@@ -691,7 +691,26 @@ function render() {
 	    setPixel(x, y, color);
 	}
     }
-    
+    */
+
+    for(var x = 0; x < canvas.width; x++){
+	for(var y = 0; y < canvas.height; y++){
+	    var color  = vec3.create();
+	    for(var p = 0; p < 4; p++){
+		for(var q = 0; q < 4; q++){
+		    var random = Math.random();
+		    var x2 = x + (p + random)/4;
+		    var y2 = y + (q + random)/4;
+		    curRay = camera.castRay(x2, y2);
+		    vec3.add(color, color, getSinglePixelColor(curRay, -1));
+		}
+	    }
+	    color[0] = color[0]/16;
+	    color[1] = color[1]/16;
+	    color[2] = color[2]/16;
+	    setPixel(x, y, color);
+	}
+    }
     //render the pixels that have been set
   context.putImageData(imageBuffer,0,0);
     
