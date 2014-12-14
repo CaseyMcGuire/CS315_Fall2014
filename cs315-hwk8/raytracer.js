@@ -404,8 +404,16 @@ function getColor(intersection, surface, ray){
     //first, figure out the direction of the light based on whether its a directional
     //light or a point light
     //if it has 
-    if(lights.Point !== undefined && lights.Direction !== undefined){
+    if(lights.Point !== undefined && lights.Edge1 !== undefined && lights.Edge2){
+	var softColor = vec3.create();
+	var corner = vec3.clone(lights.Point.position);
+	var edge1 = vec3.clone(lights.Edge1.direction);
+	vec3.normalize(edge1);
+	var edge2 = vec3.clone(lights.Edge2.direction);
+	vec3.normalize(edge2);
 
+	var points = getRandomPoints(corner, edge1, edge2);
+	
 
     }
     else if(lights.Point !== undefined){
@@ -486,9 +494,32 @@ function getColor(intersection, surface, ray){
 }
 
 /*
-  
-  
+  Returns an array of 16 random points on an area light.
 
+
+
+*/
+function getRandomPoints(corner, firstEdge, secondEdge){
+    var n = 16;
+    var epsilon1 = Math.random();
+    var epsiolon2 = Math.random();
+    var arr = [];
+
+    for(var i = 0; i < n; i++){
+	var point = vec3.create();
+	vec3.add(point, point, corner);
+	vec3.scaleAndAdd(point, point, firstEdge, epsilon1);
+	vec3.scaleAndAdd(point, point, secondEdge, epsilon2);
+	arr[i] = point;
+    }
+
+    return arr;
+
+}
+
+/*
+  
+ 
 */
 function getSoftShadowColor(intersection, surface, ray, lightPoint){
     
