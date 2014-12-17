@@ -266,13 +266,15 @@ function init() {
    // loadSceneFile("assets/TransformationTest.json");
    loadSceneFile("assets/FullTest.json");
   //  loadSceneFile("assets/FullTest2.json");
-  // loadSceneFile("assets/ShadowTest1.json");
+   loadSceneFile("assets/ShadowTest1.json");
    // loadSceneFile("assets/ShadowTest2.json");
   //  loadSceneFile("assets/RecursiveTest.json");
   //  loadSceneFile("assets/2RecursiveTest.json");
   // loadSceneFile("assets/CornellBox.json");
    // loadSceneFile("assets/3CornellBox.json");
-   // loadSceneFile("assets/RecursiveBalls.json");
+
+  //  loadSceneFile("assets/RecursiveBalls.json");
+
    // loadSceneFile("assets/1test.json");
 }
 
@@ -368,7 +370,6 @@ function getSurfaceShape(surface){
 
   @param{Object} a light object with a source field
   @return{Object} an appropriate light object
-x
 */
 function getLightType(light){
 
@@ -396,14 +397,27 @@ function getColor(intersection, surface, ray){
     var light;
     var lightPos;
     var lightDirection;
-    var normal = intersection.normal;
+    var normal = vec3.clone(intersection.normal);
     var maxT; 
     vec3.normalize(normal, normal);
     
   
     //first, figure out the direction of the light based on whether its a directional
     //light or a point light
-    if(lights.Point !== undefined){
+    //if it has 
+    if(lights.Point !== undefined && lights.Edge1 !== undefined && lights.Edge2){
+	var softColor = vec3.create();
+	var corner = vec3.clone(lights.Point.position);
+	var edge1 = vec3.clone(lights.Edge1.direction);
+	vec3.normalize(edge1);
+	var edge2 = vec3.clone(lights.Edge2.direction);
+	vec3.normalize(edge2);
+
+	var points = getRandomPoints(corner, edge1, edge2);
+	
+
+    }
+    else if(lights.Point !== undefined){
 	light = lights.Point;
 	lightPos = light.position;
 	maxT = vec3.length(vec3.subtract([0,0,0], lightPos, intersection.intersectionPoint));
@@ -442,6 +456,7 @@ function getColor(intersection, surface, ray){
 
     //get the specular component of our light
     var ks = vec3.clone(materials[surface.material].ks);
+
     //get vector that points toward the camera
     var v = vec3.clone(ray.direction);
     for(var i = 0; i < v.length; i++){
@@ -451,6 +466,7 @@ function getColor(intersection, surface, ray){
     
     var coefficient = Math.max(0, vec3.dot(reflection, v));
     var shininess = materials[surface.material].shininess;
+
     //if the shininess coefficient is 0, don't use it to calculate the specular component
     if(shininess !== 0){
 	coefficient = Math.pow(coefficient, materials[surface.material].shininess);
@@ -476,6 +492,108 @@ function getColor(intersection, surface, ray){
     }
 
     return color;
+}
+
+/*
+  Returns an array of 16 random points on an area light.
+
+
+
+*/
+function getRandomPoints(corner, firstEdge, secondEdge){
+    var n = 16;
+    var epsilon1 = Math.random();
+    var epsiolon2 = Math.random();
+    var arr = [];
+
+    for(var i = 0; i < n; i++){
+	var point = vec3.create();
+	vec3.add(point, point, corner);
+	vec3.scaleAndAdd(point, point, firstEdge, epsilon1);
+	vec3.scaleAndAdd(point, point, secondEdge, epsilon2);
+	arr[i] = point;
+    }
+
+    return arr;
+
+}
+
+/*
+  
+ 
+*/
+function getSoftShadowColor(intersection, surface, ray, lightPoint){
+    
+    var light;
+    var lightPos;
+    var lightDirection;
+    var normal = vec3.clone(intersection.normal);
+    var maxT; 
+    vec3.normalize(normal, normal);
+    
+    lightPos = vec3.clone(lightPoint);
+    maxT = vec3.length(vec3.subtract([0,0,0], lightPos, intersectionPoint));
+    lightDirection = vec3.subtract([0,0,0], intersection.intersectionPoint, lightPos);
+    
+    
+    vec3.normalize(lightDirection, lightDirection);
+   var negativeLightDirection = vec3.subtract([0,0,0], [0,0,0], lightDirection);
+   
+
+    var reflection = vec3.normalize([0,0,0], getReflection(lightDirection, normal));
+    vec3.normalize(reflection, reflection);
+  
+    //get the ambient component of our light
+    var ka = vec3.clone(materials[surface.material].ka);
+    vec3.multiply(ka, ka, lights.Ambient.color);
+    
+    //get the diffuse component of our light
+    var kd = vec3.clone(materials[surface.material].kd);
+    vec3.multiply(kd, kd, light.color);
+
+
+    var diffuse = Math.max(0, vec3.dot(normal, negativeLightDirection));
+    vec3.scale(kd, kd, diffuse);
+
+    //get the specular component of our light
+    var ks = vec3.clone(materials[surface.material].ks);
+
+    //get vector that points toward the camera
+    var v = vec3.clone(ray.direction);
+    for(var i = 0; i < v.length; i++){
+	v[i] = -v[i];
+    }
+    vec3.normalize(v,v);
+    
+    var coefficient = Math.max(0, vec3.dot(reflection, v));
+    var shininess = materials[surface.material].shininess;
+
+    //if the shininess coefficient is 0, don't use it to calculate the specular component
+    if(shininess !== 0){
+	coefficient = Math.pow(coefficient, materials[surface.material].shininess);
+    }
+    
+    vec3.scale(ks, ks, coefficient);
+   
+    var point = vec3.clone(intersection.intersectionPoint);
+
+    //check if the current point is in a shadow
+    var inShadow = isInShadow(new Ray(negativeLightDirection, point, maxT, shadowBias));
+    
+    //add ambient to the final color 
+    var color = vec3.add([0,0,0], ka, [0,0,0]);
+
+    //if the current point *isn't* in a shadow, also add diffuse and specular lighting
+    if(!inShadow){
+	vec3.add(color, color, kd);
+	//if the current point doesn't have any shininess, don't add any specular lighting
+	if(shininess !== 0){
+	    vec3.add(color, color, ks);
+	}
+    }
+
+    return color;
+
 }
 
 /*
@@ -682,6 +800,7 @@ function getSinglePixelColor(ray, recursionDepth){
 function render() {
     var start = Date.now(); //for logging
 
+/*
     //color each pixel of the image
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
@@ -690,7 +809,28 @@ function render() {
 	    setPixel(x, y, color);
 	}
     }
-    
+    */
+    var n = 4;
+    var nSquared = Math.pow(n, 2);
+
+    for(var x = 0; x < canvas.width; x++){
+	for(var y = 0; y < canvas.height; y++){
+	    var color  = vec3.create();
+	    for(var p = 0; p < 4; p++){
+		for(var q = 0; q < 4; q++){
+		    var random = Math.random();
+		    var x2 = x + (p + random)/n;
+		    var y2 = y + (q + random)/n;
+		    curRay = camera.castRay(x2, y2);
+		    vec3.add(color, color, getSinglePixelColor(curRay, -1));
+		}
+	    }
+	    color[0] = color[0]/nSquared;
+	    color[1] = color[1]/nSquared;
+	    color[2] = color[2]/nSquared;
+	    setPixel(x, y, color);
+	}
+    }
     //render the pixels that have been set
   context.putImageData(imageBuffer,0,0);
     
