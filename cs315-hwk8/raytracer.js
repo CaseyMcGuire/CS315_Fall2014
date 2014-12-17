@@ -779,12 +779,13 @@ Camera.prototype.castRay = function(x, y){
      }
  }
 
+/*
+  This function colors the canvas using depth of field effects, assuming they exist.
+*/
  function colorUsingDepthOfField(){
 
      console.log("depth of field");
      var originalEye = vec3.clone(camera.eye);
-
-
 
      for(var x = 0; x < canvas.width; x++){
 	 for(var y = 0; y < canvas.height; y++){
@@ -827,10 +828,13 @@ Camera.prototype.castRay = function(x, y){
 
 var debug = true;
 
+/*
+  Returns an array filled with vec3s representing randomly sampled points on the lense.
+*/
 function getRandomLocationsOnLense(){
     var array = [];
-    for(var i = 0; i < 50; i++){
-	var r = Math.random();
+    for(var i = 0; i < 100; i++){
+	var r = .04*Math.random();
 	var theta = Math.random() * 2 * Math.PI;
 
 	var x = Math.sqrt(r) * Math.cos(theta);
@@ -838,10 +842,7 @@ function getRandomLocationsOnLense(){
 	array[i] = [x,y,1];
     }
 
-    if(debug){
-	console.log(array);
-	debug = false;
-    }
+    
 
     return array;
 }
@@ -900,7 +901,7 @@ $(document).ready(function(){
 	shouldUseStochasticSupersampling = $('#sampling-checkbox').is(':checked');;
     });
 
-    if(lights.Point !== undefined){
+    if(scene.soft_shadow !== undefined){
 	//make it so user can enable/disable soft shadows
 	$('#soft-shadow-checkbox').click(function(){
 	    shouldUseSoftShadows = $('#soft-shadow-checkbox').is(':checked');
