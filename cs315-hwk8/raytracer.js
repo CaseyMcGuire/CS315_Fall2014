@@ -268,18 +268,20 @@ Camera.prototype.castRay = function(x, y){
 
   // loadSceneFile("assets/SphereTest.json");
  //loadSceneFile("assets/TriangleTest.json");
- //    loadSceneFile("assets/SphereShadingTest2.json");
+    // loadSceneFile("assets/SphereShadingTest2.json");
   // loadSceneFile("assets/SphereShadingTest1.json");
    // loadSceneFile("assets/TriangleShadingTest.json");
     // loadSceneFile("assets/TransformationTest.json");
-  //  loadSceneFile("assets/FullTest.json");
+   // loadSceneFile("assets/FullTest.json");
    //  loadSceneFile("assets/FullTest2.json");
    // loadSceneFile("assets/ShadowTest1.json");
     // loadSceneFile("assets/ShadowTest2.json");
    //  loadSceneFile("assets/RecursiveTest.json");
    //  loadSceneFile("assets/2RecursiveTest.json");
-    loadSceneFile("assets/CornellBox.json");
+   // loadSceneFile("assets/CornellBox.json");
     // loadSceneFile("assets/3CornellBox.json");
+
+     //------TRY THESE----------//
    //  loadSceneFile("assets/RecursiveBalls.json");
     // loadSceneFile("assets/1test.json");
     // loadSceneFile("assets/SoftShadowTest.json");
@@ -512,6 +514,7 @@ Camera.prototype.castRay = function(x, y){
      return color;
  }
 
+
  function getRandomPointOnSphere(){
      var u = Math.random();
      var v = Math.random();
@@ -532,6 +535,7 @@ Camera.prototype.castRay = function(x, y){
 
      return point;
  }
+
 
  /*
    Returns true if the surface point is in a shadow; false otherwise.
@@ -882,7 +886,7 @@ $(document).ready(function(){
     shouldUseStochasticSupersampling = false;
     shouldUseSoftShadows = false;
     rerender();
-    getRandomPoints();
+    
 
    if(scene.focal_plane !== undefined){
 	   shouldUseFocalPlane = true;
@@ -896,7 +900,7 @@ $(document).ready(function(){
 
     if(lights.Point !== undefined){
 	//make it so user can enable/disable soft shadows
-		
+	getRandomPoints();	
 	$('#soft-shadow-checkbox').click(function(){
 	    shouldUseSoftShadows = $('#soft-shadow-checkbox').is(':checked');
 	    console.log(shouldUseSoftShadows);
