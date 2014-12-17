@@ -269,7 +269,7 @@ function init() {
    // loadSceneFile("assets/TransformationTest.json");
  //  loadSceneFile("assets/FullTest.json");
   //  loadSceneFile("assets/FullTest2.json");
-  // loadSceneFile("assets/ShadowTest1.json");
+   loadSceneFile("assets/ShadowTest1.json");
    // loadSceneFile("assets/ShadowTest2.json");
   //  loadSceneFile("assets/RecursiveTest.json");
   //  loadSceneFile("assets/2RecursiveTest.json");
@@ -277,7 +277,7 @@ function init() {
    // loadSceneFile("assets/3CornellBox.json");
   //  loadSceneFile("assets/RecursiveBalls.json");
    // loadSceneFile("assets/1test.json");
-    loadSceneFile("assets/SoftShadowTest.json");
+  //  loadSceneFile("assets/SoftShadowTest.json");
 }
 
 
@@ -817,6 +817,7 @@ function render() {
 	}
     }
     */
+/*
     var n = 4;
     var nSquared = Math.pow(n, 2);
 
@@ -838,6 +839,12 @@ function render() {
 	    setPixel(x, y, color);
 	}
     }
+*/
+    if(shouldUseStochasticSupersampling){
+	colorEachPixelUsingStochasticSupersampling();
+    }else{
+	colorEachPixelNormally();
+    }
     //render the pixels that have been set
   context.putImageData(imageBuffer,0,0);
     
@@ -847,8 +854,32 @@ function render() {
 
 }
 
+function colorEachPixelUsingStochasticSupersampling(){
+    var n = 4;
+    var nSquared = Math.pow(n, 2);
 
-function colorEachPixelNormaly(){
+    for(var x = 0; x < canvas.width; x++){
+	for(var y = 0; y < canvas.height; y++){
+	    var color  = vec3.create();
+	    for(var p = 0; p < 4; p++){
+		for(var q = 0; q < 4; q++){
+		    var random = Math.random();
+		    var x2 = x + (p + random)/n;
+		    var y2 = y + (q + random)/n;
+		    curRay = camera.castRay(x2, y2);
+		    vec3.add(color, color, getSinglePixelColor(curRay, -1));
+		}
+	    }
+	    color[0] = color[0]/nSquared;
+	    color[1] = color[1]/nSquared;
+	    color[2] = color[2]/nSquared;
+	    setPixel(x, y, color);
+	}
+    }
+
+}
+
+function colorEachPixelNormally(){
     //color each pixel of the image
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
@@ -879,11 +910,28 @@ function rad(degrees){
   return degrees*Math.PI/180;
 }
 
+function rerender(){
+    init();
+    render();
+}
+
 //on load, run the application
 $(document).ready(function(){
-  init();
-  render();
+    shouldUseStochasticSupersampling = $('#sampling-checkbox').is(':checked');;
+  
+    rerender();
+    
 
+    //make it so the user can enable/disable random supersampling
+    $('#sampling-checkbox').click(function(){
+	shouldUseStochasticSupersampling = $('#sampling-checkbox').is(':checked');;
+    });
+    
+    //allow user to rerender image to reflect changes in checkboxes
+    $('#render-button').click(function(){
+	rerender();
+    });
+    
   //load and render new scene
   $('#load_scene_button').click(function(){
     var filepath = 'assets/'+$('#scene_file_input').val()+'.json';
