@@ -17,7 +17,8 @@ var materials;
 var lights;
 var bounceDepth;
 var shadowBias;
-var randomPoints;
+//var randomPoints;
+var numberOfRandomPoints = 200;
 var randomPointsOnLight;
 //etc...
 
@@ -491,7 +492,7 @@ function getColor(intersection, surface, ray){
     
     if(shouldUseSoftShadows){
 	
-	var count = 20;
+	var count = numberOfRandomPoints;
 	for(var i = 0; i < count; i++){
 
 	    var newLightDirection = vec3.subtract([0,0,0], intersection.intersectionPoint, randomPointsOnLight[i]);
@@ -654,12 +655,7 @@ function getSinglePixelColor(ray, recursionDepth){
 	    curIntersection = surfaces[i].intersects(ray);
 	}
 
-	if(DEBUG){
-	    console.log("----------");
-	    console.log(curIntersection);
-	    console.log(surfaces[i].name);
-	    console.log("--------------");
-	}
+	
 	
 	//if the current intersection is closer than the current king, replace it
 	if(frontIntersection === null || 
@@ -755,7 +751,7 @@ function colorEachPixelUsingStochasticSupersampling(){
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
 	    var color  = vec3.create();
-	    getRandomPoints();
+	    
 	    for(var p = 0; p < 4; p++){
 		for(var q = 0; q < 4; q++){
 		    var random = Math.random();
@@ -782,7 +778,7 @@ function colorEachPixelNormally(){
     
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
-	    getRandomPoints();
+	   // getRandomPoints();
 	    curRay = camera.castRay(x, y);
 	    //getRandomPoints();
 	    var color =  getSinglePixelColor(curRay, -1);
@@ -801,10 +797,12 @@ function colorEachPixelUsingSoftShadows(){
 }
 
 
-
+/*
+  This functions fills the  
+*/
 function getRandomPoints(){
     randomPointsOnLight = [];
-    for(var j = 0; j < 50; j++){
+    for(var j = 0; j < numberOfRandomPoints; j++){
 	randomPointsOnLight[j] = getRandomPointOnSphere();
     }
 }
@@ -839,20 +837,22 @@ function rerender(){
 $(document).ready(function(){
     shouldUseStochasticSupersampling = false;
     shouldUseSoftShadows = false;
-  
     rerender();
-    
+    getRandomPoints();
+
 
     //make it so the user can enable/disable random supersampling
     $('#sampling-checkbox').click(function(){
 	shouldUseStochasticSupersampling = $('#sampling-checkbox').is(':checked');;
     });
 
-    //make it so user can enable/disable soft shadows
-    $('#soft-shadow-checkbox').click(function(){
-	shouldUseSoftShadows = $('#soft-shadow-checkbox').is(':checked');
-	//console.log(shouldUseSoftShadows);
-    });
+    if(lights.Point !== undefined){
+	//make it so user can enable/disable soft shadows
+	$('#soft-shadow-checkbox').click(function(){
+	    shouldUseSoftShadows = $('#soft-shadow-checkbox').is(':checked');
+	    //console.log(shouldUseSoftShadows);
+	});
+    }
     
     //allow user to rerender image to reflect changes in checkboxes
     $('#render-button').click(function(){
