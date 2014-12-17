@@ -18,6 +18,7 @@ var lights;
 var bounceDepth;
 var shadowBias;
 var randomPoints;
+var randomPointsOnLight;
 //etc...
 
 //define our objects (may not need some of these...)
@@ -270,7 +271,7 @@ function init() {
    // loadSceneFile("assets/TransformationTest.json");
  //  loadSceneFile("assets/FullTest.json");
   //  loadSceneFile("assets/FullTest2.json");
-   loadSceneFile("assets/ShadowTest1.json");
+  // loadSceneFile("assets/ShadowTest1.json");
    // loadSceneFile("assets/ShadowTest2.json");
   //  loadSceneFile("assets/RecursiveTest.json");
   //  loadSceneFile("assets/2RecursiveTest.json");
@@ -278,7 +279,7 @@ function init() {
    // loadSceneFile("assets/3CornellBox.json");
   //  loadSceneFile("assets/RecursiveBalls.json");
    // loadSceneFile("assets/1test.json");
-  //  loadSceneFile("assets/SoftShadowTest.json");
+    loadSceneFile("assets/SoftShadowTest.json");
 }
 
 
@@ -335,20 +336,13 @@ function isGreaterThan90Degrees(vec1, vec2){
 
     var temp1 = vec3.clone(vec1);
     var temp2 = vec3.clone(vec2);
-    if(DEBUG){
-//	console.log("temp1 and temp2");
-//	console.log(temp1);
-//	console.log(temp2);
-    }
+    
 
     vec3.normalize(temp1, temp1);
     vec3.normalize(temp2, temp2);
 
     var dot = vec3.dot(temp1, temp2);
-    if(DEBUG) {
-//	console.log("dot: ");
-//	console.log(dot);
-    }
+    
     if(dot > 0) return true;
     else return false;
     
@@ -484,129 +478,66 @@ function getColor(intersection, surface, ray){
    
     var point = vec3.clone(intersection.intersectionPoint);
 
+    
     //check if the current point is in a shadow
     var inShadow = isInShadow(new Ray(negativeLightDirection, point, maxT, shadowBias));
     
+    
+    
+    
+    
     //add ambient to the final color 
     var color = vec3.add([0,0,0], ka, [0,0,0]);
+    
+    if(shouldUseSoftShadows){
+	
+	var count = 20;
+	for(var i = 0; i < count; i++){
 
-    //if the current point *isn't* in a shadow, also add diffuse and specular lighting
-    if(!inShadow){
-	vec3.add(color, color, kd);
-	//if the current point doesn't have any shininess, don't add any specular lighting
-	if(shininess !== 0){
-	    vec3.add(color, color, ks);
+	    var newLightDirection = vec3.subtract([0,0,0], intersection.intersectionPoint, randomPointsOnLight[i]);
+	    vec3.subtract(newLightDirection, [0,0,0], newLightDirection);
+	    if(!isInShadow(new Ray(newLightDirection, point, maxT, shadowBias))){
+		vec3.add(color, color, kd);
+		vec3.add(color, color, ks);
+	    }
+	}
+	vec3.scale(color, color, 1/count);
+	
+    }else{
+	//if the current point *isn't* in a shadow, also add diffuse and specular lighting
+	if(!inShadow){
+	    vec3.add(color, color, kd);
+	    //if the current point doesn't have any shininess, don't add any specular lighting
+	    if(shininess !== 0){
+		vec3.add(color, color, ks);
+	    }
 	}
     }
 
     return color;
 }
 
-/*
-  Returns an array of 16 random points on an area light.
+function getRandomPointOnSphere(){
+    var u = Math.random();
+    var v = Math.random();
 
-*/
-function getRandomPoints(corner, firstEdge, secondEdge){
-    var n = 16;
-    var epsilon1 = Math.random();
-    var epsiolon2 = Math.random();
-    var arr = [];
+    var theta = 2 * Math.PI * u;
+    var epsilon = Math.acos(2 * v - 1);
 
-    for(var i = 0; i < n; i++){
-	var point = vec3.create();
-	vec3.add(point, point, corner);//r = c
-	vec3.scaleAndAdd(point, point, firstEdge, epsilon1);//r = c + (eps1)(a)
-	vec3.scaleAndAdd(point, point, secondEdge, epsilon2);//r = c + (eps1)(a) + (eps2)(b)
-	arr[i] = point;//store this point
-    }
+    var scale = 1/5;
 
-    return arr;
+    var x = scale*Math.sin(theta)*Math.cos(epsilon);
+    var y = scale*Math.sin(theta) * Math.sin(epsilon);
+    var z = scale*Math.cos(theta);
 
-}
+    var point = vec3.create();
+    point[0] = x + lights.Point.position[0];
+    point[1] = y + lights.Point.position[1];
+    point[2] = z + lights.Point.position[2];
 
-/*
-  
- 
-*/
-function getSoftShadowColor(intersection, surface, ray, lightPoint){
-    
-    var light;
-    var lightPos;
-    var lightDirection;
-    var normal = vec3.clone(intersection.normal);
-    var maxT; 
-    vec3.normalize(normal, normal);
-    
-    lightPos = vec3.clone(lightPoint);
-    maxT = vec3.length(vec3.subtract([0,0,0], lightPos, intersectionPoint));
-    lightDirection = vec3.subtract([0,0,0], intersection.intersectionPoint, lightPos);
-    
-    
-    vec3.normalize(lightDirection, lightDirection);
-   
-   
-
-    var reflection = vec3.normalize([0,0,0], getReflection(lightDirection, normal));
-    vec3.normalize(reflection, reflection);
-  
-    //get the ambient component of our light
-    var ka = vec3.clone(materials[surface.material].ka);
-    vec3.multiply(ka, ka, lights.Ambient.color);
-    
-    //get the diffuse component of our light
-    var kd = vec3.clone(materials[surface.material].kd);
-    vec3.multiply(kd, kd, light.color);
-
-
-   
     
 
-    //get the specular component of our light
-    var ks = vec3.clone(materials[surface.material].ks);
-
-    //get vector that points toward the camera
-    var v = vec3.clone(ray.direction);
-    for(var i = 0; i < v.length; i++){
-	v[i] = -v[i];
-    }
-    vec3.normalize(v,v);
-    
-    var coefficient = Math.max(0, vec3.dot(reflection, v));
-    var shininess = materials[surface.material].shininess;
-
-    //if the shininess coefficient is 0, don't use it to calculate the specular component
-    if(shininess !== 0){
-	coefficient = Math.pow(coefficient, materials[surface.material].shininess);
-    }
-    
-    vec3.scale(ks, ks, coefficient);
-   
-    var point = vec3.clone(intersection.intersectionPoint);
-
-    //should I calculate a different diffuse component for each light direction?
-    var negativeLightDirection = vec3.subtract([0,0,0], [0,0,0], lightDirection);
-    var diffuse = Math.max(0, vec3.dot(normal, negativeLightDirection));
-    vec3.scale(kd, kd, diffuse);
-    
-    //check if the current point is in a shadow
-    //var inShadow = isInShadow(new Ray(negativeLightDirection, point, maxT, shadowBias));
-    
-    //add ambient to the final color 
-    var color = vec3.add([0,0,0], ka, [0,0,0]);
-
-    //if the current point *isn't* in a shadow, also add diffuse and specular lighting
-    
-/*
-    if(!inShadow){
-	vec3.add(color, color, kd);
-	//if the current point doesn't have any shininess, don't add any specular lighting
-	if(shininess !== 0){
-	    vec3.add(color, color, ks);
-	}
-    }
-*/
-    return color;
-
+    return point;
 }
 
 /*
@@ -648,11 +579,7 @@ function getReflection(direction, normal){
 function getTransformationMatrix(surface){
     var matrix = mat4.create();
 
-    if(DEBUG){
-//	console.log("This surface is");
-//	console.log(surface);
-    }
-  
+     
     if(surface.transforms.Translate !== undefined){
 	mat4.translate(matrix, matrix, surface.transforms.Translate);
     }
@@ -677,14 +604,7 @@ function getTransformationMatrix(surface){
   @param {float} The current depth of the recursion
 */
 function getSinglePixelColor(ray, recursionDepth){
-    if(DEBUG){
-//	console.log("recursionDepth is ");
-//	console.log(recursionDepth);
-//	console.log("bounceDepth is ");
-//	console.log(bounceDepth);
-//	console.log("is recursionDepth greater than or equal to bounceDepth?");
-//	console.log(recursionDepth >= bounceDepth);
-    }
+   
     if(recursionDepth >= bounceDepth) return [0, 0, 0];
     
     var curRay;
@@ -758,13 +678,10 @@ function getSinglePixelColor(ray, recursionDepth){
 	
     }
 
-    if(DEBUG){
-//	console.log("The front surface is");
-//	console.log(frontSurface);
-    }
+    
     if(frontIntersection === null) {
-//	if(DEBUG) console.log("frontIntersection was null");
-	return [0,0,0];// setPixel(x, y, [0,0,0]);
+
+	return [0,0,0];
     }
     else {
 	
@@ -838,6 +755,7 @@ function colorEachPixelUsingStochasticSupersampling(){
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
 	    var color  = vec3.create();
+	    getRandomPoints();
 	    for(var p = 0; p < 4; p++){
 		for(var q = 0; q < 4; q++){
 		    var random = Math.random();
@@ -861,12 +779,33 @@ function colorEachPixelUsingStochasticSupersampling(){
 */
 function colorEachPixelNormally(){
     //color each pixel of the image
+    
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
+	    getRandomPoints();
 	    curRay = camera.castRay(x, y);
+	    //getRandomPoints();
 	    var color =  getSinglePixelColor(curRay, -1);
 	    setPixel(x, y, color);
 	}
+    }
+}
+
+function colorEachPixelUsingSoftShadows(){
+    for(var x = 0; x < canvas.width; x++){
+	for(var y = 0; y < canvas.height; y++){
+	    var color = vec3.create();
+	    
+	}
+    }
+}
+
+
+
+function getRandomPoints(){
+    randomPointsOnLight = [];
+    for(var j = 0; j < 50; j++){
+	randomPointsOnLight[j] = getRandomPointOnSphere();
     }
 }
 
