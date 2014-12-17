@@ -280,7 +280,8 @@ function init() {
    // loadSceneFile("assets/3CornellBox.json");
   //  loadSceneFile("assets/RecursiveBalls.json");
    // loadSceneFile("assets/1test.json");
-    loadSceneFile("assets/SoftShadowTest.json");
+  //  loadSceneFile("assets/SoftShadowTest.json");
+    loadSceneFile("assets/DepthOfField.json");
 }
 
 
@@ -406,21 +407,7 @@ function getColor(intersection, surface, ray){
 
 
     //below is shirley's implementation of soft shadows.... I'm going to try something different
-/*
-    if(lights.Point !== undefined && lights.Edge1 !== undefined && lights.Edge2){
-	var softColor = vec3.create();
-	var corner = vec3.clone(lights.Point.position);
-	var edge1 = vec3.clone(lights.Edge1.direction);
-	vec3.normalize(edge1);
-	var edge2 = vec3.clone(lights.Edge2.direction);
-	vec3.normalize(edge2);
-
-	var points = getRandomPoints(corner, edge1, edge2);
-	
-
-    }
-*/
-     if(lights.Point !== undefined){
+    if(lights.Point !== undefined){
 	light = lights.Point;
 	lightPos = light.position;
 	maxT = vec3.length(vec3.subtract([0,0,0], lightPos, intersection.intersectionPoint));
@@ -698,10 +685,7 @@ function getSinglePixelColor(ray, recursionDepth){
 	    
 	    vec4.transformMat4(frontIntersection.normal, frontIntersection.normal, temp);
 	}
-
-	if(DEBUG){
-	    console.log(frontSurface.name);
-	}
+	
 	//the color for this level of recursion
 	var baseColor = getColor(frontIntersection, frontSurface, ray);
 
@@ -787,14 +771,6 @@ function colorEachPixelNormally(){
     }
 }
 
-function colorEachPixelUsingSoftShadows(){
-    for(var x = 0; x < canvas.width; x++){
-	for(var y = 0; y < canvas.height; y++){
-	    var color = vec3.create();
-	    
-	}
-    }
-}
 
 
 /*
