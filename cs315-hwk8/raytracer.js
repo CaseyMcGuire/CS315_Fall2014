@@ -20,6 +20,7 @@ var shadowBias;
 //var randomPoints;
 var numberOfRandomPoints = 200;
 var randomPointsOnLight;
+var focalPlane;
 //etc...
 
 //define our objects (may not need some of these...)
@@ -292,6 +293,14 @@ function loadSceneFile(filepath) {
 
 
     camera = new Camera(scene.camera.eye, scene.camera.up, scene.camera.at, scene.camera.fovy, scene.camera.aspect);
+
+
+    if(scene.focal_plane !== undefined){
+	focalPlane = [];
+	focalPlane[0] = new Triangle(scene.focal_plane[0].p1, scene.focal_plane[0].p2, scene.focal_plane[0].p3);
+	focalPlane[1] = new Triangle(scene.focal_plane[1].p1, scene.focal_plane[1].p2, scene.focal_plane[1].p3);
+//	console.log(focalPlane);
+    }
 
     bounceDepth = scene.bounce_depth;
     shadowBias = scene.shadow_bias;
