@@ -881,6 +881,7 @@ function rad(degrees){
 
 //on load, run the application
 $(document).ready(function(){
+
   init();
   render();
 
