@@ -164,8 +164,7 @@ Triangle.prototype.intersects = function(ray){
     vec3.cross(P, ray.direction, edge2);
 
     //if determinant is near zero, ray lies in plane of triangle
-    determinant = vec3.dot(edge1, P);
-    
+    determinant = vec3.dot(edge1, P);   
     //NOT CULLING
     if(determinant > -EPSILON && determinant < EPSILON) return null;
     inverseDeterminant = 1/determinant;
@@ -265,7 +264,7 @@ function init() {
  // loadSceneFile("assets/SphereShadingTest1.json");
   // loadSceneFile("assets/TriangleShadingTest.json");
    // loadSceneFile("assets/TransformationTest.json");
-  // loadSceneFile("assets/FullTest.json");
+   loadSceneFile("assets/FullTest.json");
   //  loadSceneFile("assets/FullTest2.json");
   // loadSceneFile("assets/ShadowTest1.json");
    // loadSceneFile("assets/ShadowTest2.json");
@@ -273,7 +272,7 @@ function init() {
   //  loadSceneFile("assets/2RecursiveTest.json");
   // loadSceneFile("assets/CornellBox.json");
    // loadSceneFile("assets/3CornellBox.json");
-    loadSceneFile("assets/RecursiveBalls.json");
+   // loadSceneFile("assets/RecursiveBalls.json");
    // loadSceneFile("assets/1test.json");
 }
 
