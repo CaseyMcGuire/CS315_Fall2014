@@ -469,11 +469,7 @@ function getColor(intersection, surface, ray){
     
     //check if the current point is in a shadow
     var inShadow = isInShadow(new Ray(negativeLightDirection, point, maxT, shadowBias));
-    
-    
-    
-    
-    
+        
     //add ambient to the final color 
     var color = vec3.add([0,0,0], ka, [0,0,0]);
     
@@ -762,11 +758,20 @@ function colorEachPixelNormally(){
     
     for(var x = 0; x < canvas.width; x++){
 	for(var y = 0; y < canvas.height; y++){
-	   // getRandomPoints();
 	    curRay = camera.castRay(x, y);
-	    //getRandomPoints();
 	    var color =  getSinglePixelColor(curRay, -1);
 	    setPixel(x, y, color);
+	}
+    }
+}
+
+function colorUsingDepthOfField(){
+    for(var x = 0; x < canvas.width; x++){
+	for(var y = 0; y < canvas.height; y++){
+	    curRay = camera.castRay(x, y);
+	    //var focalPoint = 
+	    var pixelColor = 0;
+	    
 	}
     }
 }
@@ -815,7 +820,7 @@ $(document).ready(function(){
     shouldUseSoftShadows = false;
     rerender();
     getRandomPoints();
-
+    
 
     //make it so the user can enable/disable random supersampling
     $('#sampling-checkbox').click(function(){
