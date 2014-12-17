@@ -7,6 +7,7 @@ var DEBUG = false; //whether to show debug messages
 var EPSILON = 0.00001; //error margins
 
 var shouldUseStochasticSupersampling;
+var shouldUseSoftShadows;
 
 //scene to render
 var scene;
@@ -407,6 +408,10 @@ function getColor(intersection, surface, ray){
     //first, figure out the direction of the light based on whether its a directional
     //light or a point light
     //if it has 
+
+
+    //below is shirley's implementation of soft shadows.... I'm going to try something different
+/*
     if(lights.Point !== undefined && lights.Edge1 !== undefined && lights.Edge2){
 	var softColor = vec3.create();
 	var corner = vec3.clone(lights.Point.position);
@@ -419,7 +424,8 @@ function getColor(intersection, surface, ray){
 	
 
     }
-    else if(lights.Point !== undefined){
+*/
+     if(lights.Point !== undefined){
 	light = lights.Point;
 	lightPos = light.position;
 	maxT = vec3.length(vec3.subtract([0,0,0], lightPos, intersection.intersectionPoint));
@@ -807,39 +813,7 @@ function getSinglePixelColor(ray, recursionDepth){
 function render() {
     var start = Date.now(); //for logging
 
-/*
-    //color each pixel of the image
-    for(var x = 0; x < canvas.width; x++){
-	for(var y = 0; y < canvas.height; y++){
-	    curRay = camera.castRay(x, y);
-	    var color =  getSinglePixelColor(curRay, -1);
-	    setPixel(x, y, color);
-	}
-    }
-    */
-/*
-    var n = 4;
-    var nSquared = Math.pow(n, 2);
 
-    for(var x = 0; x < canvas.width; x++){
-	for(var y = 0; y < canvas.height; y++){
-	    var color  = vec3.create();
-	    for(var p = 0; p < 4; p++){
-		for(var q = 0; q < 4; q++){
-		    var random = Math.random();
-		    var x2 = x + (p + random)/n;
-		    var y2 = y + (q + random)/n;
-		    curRay = camera.castRay(x2, y2);
-		    vec3.add(color, color, getSinglePixelColor(curRay, -1));
-		}
-	    }
-	    color[0] = color[0]/nSquared;
-	    color[1] = color[1]/nSquared;
-	    color[2] = color[2]/nSquared;
-	    setPixel(x, y, color);
-	}
-    }
-*/
     if(shouldUseStochasticSupersampling){
 	colorEachPixelUsingStochasticSupersampling();
     }else{
@@ -854,6 +828,9 @@ function render() {
 
 }
 
+/*
+  Colors the canvas using stochastic supersampling.
+*/
 function colorEachPixelUsingStochasticSupersampling(){
     var n = 4;
     var nSquared = Math.pow(n, 2);
@@ -879,6 +856,9 @@ function colorEachPixelUsingStochasticSupersampling(){
 
 }
 
+/*
+  Colors the canvas by firing a single ray per pixel.
+*/
 function colorEachPixelNormally(){
     //color each pixel of the image
     for(var x = 0; x < canvas.width; x++){
@@ -910,6 +890,7 @@ function rad(degrees){
   return degrees*Math.PI/180;
 }
 
+//Initializes the canvas and renders
 function rerender(){
     init();
     render();
@@ -917,7 +898,8 @@ function rerender(){
 
 //on load, run the application
 $(document).ready(function(){
-    shouldUseStochasticSupersampling = $('#sampling-checkbox').is(':checked');;
+    shouldUseStochasticSupersampling = false;
+    shouldUseSoftShadows = false;
   
     rerender();
     
@@ -925,6 +907,12 @@ $(document).ready(function(){
     //make it so the user can enable/disable random supersampling
     $('#sampling-checkbox').click(function(){
 	shouldUseStochasticSupersampling = $('#sampling-checkbox').is(':checked');;
+    });
+
+    //make it so user can enable/disable soft shadows
+    $('#soft-shadow-checkbox').click(function(){
+	shouldUseSoftShadows = $('#soft-shadow-checkbox').is(':checked');
+	//console.log(shouldUseSoftShadows);
     });
     
     //allow user to rerender image to reflect changes in checkboxes
