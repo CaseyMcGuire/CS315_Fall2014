@@ -278,12 +278,12 @@ Camera.prototype.castRay = function(x, y){
     // loadSceneFile("assets/ShadowTest2.json");
    //  loadSceneFile("assets/RecursiveTest.json");
    //  loadSceneFile("assets/2RecursiveTest.json");
-   // loadSceneFile("assets/CornellBox.json");
+    loadSceneFile("assets/CornellBox.json");
     // loadSceneFile("assets/3CornellBox.json");
    //  loadSceneFile("assets/RecursiveBalls.json");
     // loadSceneFile("assets/1test.json");
-   //  loadSceneFile("assets/SoftShadowTest.json");
-     loadSceneFile("assets/DepthOfField.json");
+    // loadSceneFile("assets/SoftShadowTest.json");
+   //  loadSceneFile("assets/DepthOfField.json");
  }
 
 
@@ -530,8 +530,6 @@ Camera.prototype.castRay = function(x, y){
      point[1] = y + lights.Point.position[1];
      point[2] = z + lights.Point.position[2];
 
-
-
      return point;
  }
 
@@ -718,7 +716,7 @@ Camera.prototype.castRay = function(x, y){
      var start = Date.now(); //for logging
 
      if(shouldUseFocalPlane){
-	 console.log("We should use the focal plane");
+	 
 	 colorUsingDepthOfField();
      }
      else if(shouldUseStochasticSupersampling){
@@ -784,7 +782,7 @@ Camera.prototype.castRay = function(x, y){
 */
  function colorUsingDepthOfField(){
 
-     console.log("depth of field");
+     
      var originalEye = vec3.clone(camera.eye);
 
      for(var x = 0; x < canvas.width; x++){
@@ -803,19 +801,13 @@ Camera.prototype.castRay = function(x, y){
 	     var lensePoints = getRandomLocationsOnLense();
 	     for(var i = 0; i < lensePoints.length; i++){
 		 var newEye = lensePoints[i];
-		 if(x < 50 && y < 50){
-		  //   console.log(newEye);
-		 }
+		 
 		 var newDirection = vec3.create();
 		 vec3.subtract(newDirection, focalPoint, newEye);
 		 vec3.normalize(newDirection, newDirection);
 		 var tempRay = new Ray(newDirection, newEye, undefined, undefined);
 		
-		//var tempRay = camera.castRay(focalPoint[0], focalPoint[1]);
-		//var tempRay = camera.castRay(focalPoint[0], focalPoint[1]);
-		//console.log(tempRay);
-		//var tempRay = camera.castRay(x,y);
-		
+				
 		vec3.add(pixelColor, pixelColor, getSinglePixelColor(tempRay, -1));
 	    }
 	    vec3.scale(pixelColor, pixelColor, 1/lensePoints.length);
@@ -826,7 +818,7 @@ Camera.prototype.castRay = function(x, y){
     }
 }
 
-var debug = true;
+
 
 /*
   Returns an array filled with vec3s representing randomly sampled points on the lense.
@@ -850,7 +842,7 @@ function getRandomLocationsOnLense(){
 
 
 /*
-  This functions fills the  
+  
 */
 function getRandomPoints(){
     randomPointsOnLight = [];
@@ -892,20 +884,22 @@ $(document).ready(function(){
     rerender();
     getRandomPoints();
 
-    colorUsingDepthOfField();
+   if(scene.focal_plane !== undefined){
+	   shouldUseFocalPlane = true;
+   }
     
-
     
     //make it so the user can enable/disable random supersampling
     $('#sampling-checkbox').click(function(){
 	shouldUseStochasticSupersampling = $('#sampling-checkbox').is(':checked');;
     });
 
-    if(scene.soft_shadow !== undefined){
+    if(lights.Point !== undefined){
 	//make it so user can enable/disable soft shadows
+		
 	$('#soft-shadow-checkbox').click(function(){
 	    shouldUseSoftShadows = $('#soft-shadow-checkbox').is(':checked');
-	    //console.log(shouldUseSoftShadows);
+	    console.log(shouldUseSoftShadows);
 	});
     }
     

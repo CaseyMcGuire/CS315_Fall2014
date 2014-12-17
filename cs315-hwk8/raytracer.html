@@ -30,7 +30,11 @@
       </div>
       
       <div class = "controls">
-	  <form action="">
+	  <form id="form" action="">
+	    <p>Note: Soft shadows only work on scenes with point lights.</p>
+	    <p>Stochastic supersampling works with any scene</p>
+	    <p>The only json file that uses depth of field is DepthOfField.json</p>
+<p>Note: These can take some time to render so I included some pics in sampleImages folder.</p>
 	    <input id="sampling-checkbox" type="checkbox" name="stochastic-sampling" value="sample">Stochastic Super Sampling<br />
 	    <input id="soft-shadow-checkbox" type="checkbox" name="soft-shadow"> Soft Shadows <br />
 	    <button id="render-button" type="button">Render</button>
